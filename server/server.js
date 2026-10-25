@@ -1,29 +1,9 @@
 
-import express from "express";
+import 'dotenv/config';
 import mongoose from "mongoose";
-import cors from "cors";
-import dotenv from "dotenv";
+import app from "./app.js";
+import { ensureDemoAdmin } from './controllers/authController.js';
 
-dotenv.config();
-
-const app = express();
-
-app.use(cors({
-  origin: "http://localhost:5173"
-}));
-
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("AuctionXpress Backend is Running!");
-});
-
-app.get("/api/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "AuctionXpress API is working!"
-  });
-});
 
 const PORT = process.env.PORT || 5000;
 
@@ -31,6 +11,7 @@ async function startServer() {
   try {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("MongoDB Connected Successfully!");
+    await ensureDemoAdmin();
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
