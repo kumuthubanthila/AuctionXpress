@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import app from "../app.js";
 import Auction from "../models/Auction.js";
 import Bid from "../models/Bid.js";
+import { mockAuth } from '../test-support/auth.js';
 
 async function http(t) {
   const server = app.listen(0, "127.0.0.1");
@@ -11,7 +12,7 @@ async function http(t) {
   t.after(() => new Promise((resolve) => server.close(resolve)));
   return async (path, method = "GET", body) => {
     const response = await fetch(`http://127.0.0.1:${server.address().port}/api/auctions${path}`, {
-      method, headers: { "Content-Type": "application/json" },
+      method, headers: { "Content-Type": "application/json", Cookie: `auctionxpress_session=${method === 'POST' && path.endsWith('/bids') ? 'test-buyer' : 'test-admin'}` },
       ...(body !== undefined && { body: JSON.stringify(body) })
     });
     return { status: response.status, body: await response.json() };
@@ -19,6 +20,7 @@ async function http(t) {
 }
 
 test("bid HTTP validation, duplicate/expired conflicts, history and CRUD guards", async (t) => {
+  mockAuth(t);
   const request = await http(t);
   const id = new mongoose.Types.ObjectId().toString();
   const auction = new Auction({ _id: id, title: "Item", description: "Demo", category: "Other", startingPrice: 10, currentPrice: 20, endsAt: new Date(Date.now() + 60000) });
@@ -54,7 +56,7 @@ test("bid HTTP validation, duplicate/expired conflicts, history and CRUD guards"
   assert.equal((await request(`/${id}/bids`, "POST", { bidderName: "Sam", amount: 20 })).status, 409);
   const accepted = await request(`/${id}/bids`, "POST", { bidderName: " Sam ", amount: 30 });
   assert.equal(accepted.status, 201);
-  assert.equal(accepted.body.data.bidderName, "Sam");
+  assert.equal(accepted.body.data.bidderName, "sam");
   assert.equal(accepted.body.currentPrice, 30);
   assert.equal((await request(`/${id}/bids`, "POST", { bidderName: "Lee", amount: 30 })).status, 409);
   assert.equal((await request(`/${id}/bids`)).body.count, 1);
@@ -71,6 +73,7 @@ test("bid HTTP validation, duplicate/expired conflicts, history and CRUD guards"
 
 // Explicit URI only; never use MONGO_URI or load the application's .env here.
 test("replica-set integration: competing bids, rollback, and racing CRUD", { skip: !process.env.TEST_MONGO_URI }, async (t) => {
+  mockAuth(t, false);
   const database = `ax_test_${new mongoose.Types.ObjectId()}`;
   t.after(async () => {
     try {

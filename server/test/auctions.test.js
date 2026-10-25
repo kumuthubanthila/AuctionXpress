@@ -4,8 +4,10 @@ import app from "../app.js";
 import Auction from "../models/Auction.js";
 import Bid from "../models/Bid.js";
 import mongoose from "mongoose";
+import { mockAuth } from '../test-support/auth.js';
 
 test("auction HTTP routes, validation, filters and errors", async (t) => {
+  mockAuth(t);
   t.mock.method(mongoose.connection, "transaction", async (callback) => callback({}));
   t.mock.method(Bid, "exists", () => ({ session: async () => null }));
   const server = app.listen(0, "127.0.0.1");
@@ -13,7 +15,7 @@ test("auction HTTP routes, validation, filters and errors", async (t) => {
   t.after(() => new Promise((resolve) => server.close(resolve)));
   const base = `http://127.0.0.1:${server.address().port}`;
   async function request(path, method = "GET", body) {
-    const response = await fetch(base + path, { method, headers: { "Content-Type": "application/json" }, ...(body !== undefined && { body: JSON.stringify(body) }) });
+    const response = await fetch(base + path, { method, headers: { "Content-Type": "application/json", Cookie: 'auctionxpress_session=test-admin' }, ...(body !== undefined && { body: JSON.stringify(body) }) });
     return { status: response.status, body: await response.json() };
   }
   const fields = { title: "Camera", description: "Used camera", category: "Electronics", startingPrice: 50, endsAt: new Date(Date.now() + 86400000).toISOString() };

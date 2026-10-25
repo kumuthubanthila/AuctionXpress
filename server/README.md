@@ -1,5 +1,7 @@
 # Auction API
 
+**Account update:** [FEATURES.md](../FEATURES.md) documents all ZIP features, permissions and new endpoints. Writes now require seller/admin session cookies and ownership; bids require buyer cookies. The demo admin **admin / admin** is created on startup. Log in using Postman's cookie jar before protected requests.
+
 Run commands from `server`:
 
 ```powershell
@@ -15,7 +17,8 @@ Use a disposable auction so the delete example does not affect existing data. St
 
 ```powershell
 $base = 'http://localhost:5000'
-Invoke-RestMethod "$base/api/health"
+Invoke-RestMethod "$base/api/auth/login" -Method Post -ContentType 'application/json' -Body '{"username":"admin","password":"admin"}' -SessionVariable session
+Invoke-RestMethod "$base/api/health" -WebSession $session
 
 # POST: expect 201; currentPrice equals startingPrice and status is open.
 $body = @{
@@ -26,37 +29,37 @@ $body = @{
   startingPrice = 5000
   endsAt = (Get-Date).ToUniversalTime().AddDays(7).ToString('o')
 } | ConvertTo-Json
-$created = Invoke-RestMethod "$base/api/auctions" -Method Post -ContentType 'application/json' -Body $body
+$created = Invoke-RestMethod "$base/api/auctions" -Method Post -ContentType 'application/json' -Body $body -WebSession $session
 $id = $created.data._id
 $created
 
 # GET list and combined search/filter/sort: expect 200.
-Invoke-RestMethod "$base/api/auctions"
-Invoke-RestMethod "$base/api/auctions?search=canon&category=Electronics&status=open&sort=-startingPrice,title"
-Invoke-RestMethod "$base/api/auctions?status=closed"
+Invoke-RestMethod "$base/api/auctions" -WebSession $session
+Invoke-RestMethod "$base/api/auctions?search=canon&category=Electronics&status=open&sort=-startingPrice,title" -WebSession $session
+Invoke-RestMethod "$base/api/auctions?status=closed" -WebSession $session
 
 # GET one: expect 200.
-Invoke-RestMethod "$base/api/auctions/$id"
+Invoke-RestMethod "$base/api/auctions/$id" -WebSession $session
 
 # PUT: expect 200 and both prices updated to 6000.
-Invoke-RestMethod "$base/api/auctions/$id" -Method Put -ContentType 'application/json' -Body '{"title":"Canon Camera - Updated","startingPrice":6000}'
+Invoke-RestMethod "$base/api/auctions/$id" -Method Put -ContentType 'application/json' -Body '{"title":"Canon Camera - Updated","startingPrice":6000}' -WebSession $session
 
 # DELETE: expect 200, then GET should return 404.
-Invoke-RestMethod "$base/api/auctions/$id" -Method Delete
-Invoke-RestMethod "$base/api/auctions/$id"
+Invoke-RestMethod "$base/api/auctions/$id" -Method Delete -WebSession $session
+Invoke-RestMethod "$base/api/auctions/$id" -WebSession $session
 ```
 
 PowerShell displays errors for non-2xx responses; inspect the response body for the JSON message. For each invalid request below, expect HTTP 400:
 
 ```powershell
-Invoke-RestMethod "$base/api/auctions/not-an-id"
-Invoke-RestMethod "$base/api/auctions?status=pending"
-Invoke-RestMethod "$base/api/auctions?sort=unknown"
-Invoke-RestMethod "$base/api/auctions" -Method Post -ContentType 'application/json' -Body '{}'
-Invoke-RestMethod "$base/api/auctions" -Method Post -ContentType 'application/json' -Body '{"startingPrice":-1}'
-Invoke-RestMethod "$base/api/auctions" -Method Post -ContentType 'application/json' -Body '{"endsAt":"2020-01-01T00:00:00Z"}'
-Invoke-RestMethod "$base/api/auctions" -Method Post -ContentType 'application/json' -Body '{"currentPrice":100}'
-Invoke-RestMethod "$base/api/auctions/000000000000000000000000"
+Invoke-RestMethod "$base/api/auctions/not-an-id" -WebSession $session
+Invoke-RestMethod "$base/api/auctions?status=pending" -WebSession $session
+Invoke-RestMethod "$base/api/auctions?sort=unknown" -WebSession $session
+Invoke-RestMethod "$base/api/auctions" -Method Post -ContentType 'application/json' -Body '{}' -WebSession $session
+Invoke-RestMethod "$base/api/auctions" -Method Post -ContentType 'application/json' -Body '{"startingPrice":-1}' -WebSession $session
+Invoke-RestMethod "$base/api/auctions" -Method Post -ContentType 'application/json' -Body '{"endsAt":"2020-01-01T00:00:00Z"}' -WebSession $session
+Invoke-RestMethod "$base/api/auctions" -Method Post -ContentType 'application/json' -Body '{"currentPrice":100}' -WebSession $session
+Invoke-RestMethod "$base/api/auctions/000000000000000000000000" -WebSession $session
 ```
 
 The final example expects 404 if that valid ObjectId does not exist. Repeat invalid-ID and missing-ID checks with PUT and DELETE; they return 400 and 404 respectively. For PUT body validation checks, use the ID of an existing auction before deleting it.
@@ -70,7 +73,7 @@ The final example expects 404 if that valid ObjectId does not exist. Repeat inva
 - List query: `search` is a case-insensitive literal title substring; `category` is an exact, case-sensitive match; `status` is `open` or `closed`. Filters combine. Unknown or repeated query parameters return 400.
 - `sort` is a comma-separated field list; prefix fields with `-` for descending order. Allowed fields: `title`, `category`, `startingPrice`, `currentPrice`, `endsAt`, `createdAt`, `updatedAt`. Default: `-createdAt`; ID breaks ties. The list is unpaginated.
 - Success responses use `{ success: true, data }`; lists also include `count`. DELETE returns `{ success: true, message }`. Errors use `{ success: false, message }` with field-level `errors` for Mongoose validation failures. Unexpected server errors return a generic 500 response.
-- Auctions with bids cannot be deleted (409). Bidding is implemented without authentication or payments; bidder names are unverified demo labels.
+- Auctions with bids cannot be deleted (409). Bidding uses the authenticated buyer's username. Seller ownership, admin approval, scheduled starts, profiles and demo checkout are implemented. No real payment processing is performed.
 
 ## Files and automated checks
 
@@ -106,10 +109,10 @@ Start the server from `server` with `npm.cmd run dev`. Use an Atlas connection (
    ```
 
 3. **GET** `{{baseUrl}}/api/auctions/{{auctionId}}/bids` returns 200 with an empty `data` array initially.
-4. **POST** that same URL with raw JSON `{"bidderName":"Sam","amount":120}`. Expect 201 with the bid in `data` and `currentPrice: 120`. **GET** the auction to verify its price; **GET** its bids to verify history (newest first).
+4. Log in as a buyer using Postman's cookie jar. **POST** that same URL with raw JSON `{"amount":120}`. Expect 201 with the bid in `data` and `currentPrice: 120`. Bidder identity is taken from the account. **GET** the auction and its bid history to verify.
 5. Repeat amount 120, or send 110: expect **409**, with the current-price requirement in `message`. Send 130: expect 201.
 6. Send blank `bidderName`, a name over 100 characters, missing fields, a string amount (`"140"`), zero, a negative number, or extra fields: expect **400**. Malformed auction IDs return 400; valid but missing IDs return 404 for both bid endpoints.
-7. **DELETE** the auction: expect **409**. **PUT** the auction with `{"startingPrice":50}`: expect **409**. Title/description edits still work, and `currentPrice` remains protected.
+7. Log back in as the item's seller or an admin. **DELETE** the auction: expect **409**. **PUT** with `{"startingPrice":50}`: expect **409**. Title/description edits still work, and `currentPrice` remains protected.
 8. For an expired case, create another auction whose `endsAt` is roughly 15 seconds in the future; wait for that time to pass, then submit a bid. Expect **409**, `Auction has ended; bids are closed`. No bid is inserted and the price stays unchanged.
 9. For competing bids, create a fresh auction at 100 and run this Postman Post-response script once (for example on a GET of that auction). Both requests use amount 150:
 

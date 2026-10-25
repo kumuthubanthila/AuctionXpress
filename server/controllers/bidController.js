@@ -22,8 +22,8 @@ export async function createBid(req, res) {
     const auction = await Auction.findOneAndUpdate({
       _id: req.params.id,
       endsAt: { $gt: new Date() },
-      currentPrice: { $lt: body.amount }
-      ,$and: [
+      currentPrice: { $lt: body.amount },
+      $and: [
         { $or: [{ approval: 'approved' }, { approval: { $exists: false } }] },
         { $or: [{ startsAt: { $lte: new Date() } }, { startsAt: { $exists: false } }] }
       ]

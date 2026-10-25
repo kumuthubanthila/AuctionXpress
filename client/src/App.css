@@ -1619,3 +1619,52 @@ td>time {
     padding:12px 10px
   }
 }
+.auth-layout { display:grid;grid-template-columns:1fr 1.1fr;gap:70px;align-items:start;padding-block:65px; }
+.auth-intro h1 { font-size:clamp(2.5rem,4vw,3.6rem);margin:18px 0 24px; }
+.auth-intro>p:last-of-type { line-height:1.9; }
+.auth-intro .tips { padding:28px 0;max-width:380px; }
+.account-form { padding:32px;max-width:740px; }
+.account-form>h2 { margin:10px 0 22px;font-size:1.6rem; }
+.account-form label { margin:17px 0 7px; }
+.account-form .button { margin-top:24px; }
+.account-form .action-row { margin-top:20px; }
+.account-form .action-row .button { margin-top:0; }
+.account-fields { display:grid;grid-template-columns:1fr 1fr;gap:0 18px; }
+.account-switch { margin-top:20px;text-align:center;font-size:.83rem; }
+.role-options { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0; }
+.role-options .role-option { border:1px solid var(--line);border-radius:9px;padding:16px;margin:0;cursor:pointer;position:relative; }
+.role-option.selected { border-color:var(--teal);background:var(--mint); }
+.role-option input { width:auto;position:absolute;right:12px;top:14px;accent-color:var(--teal); }
+.role-option strong { display:block;font-size:.9rem;padding-right:15px; }
+.role-option small { display:block;font-size:.72rem;font-weight:400;color:var(--muted);margin-top:5px; }
+.account-nav small { display:block;font-size:.65rem;text-transform:capitalize;color:var(--muted);line-height:1; }
+.nav { gap:22px; }
+.workspace-tabs { display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:30px; }
+.workspace-tabs button { border-radius:7px;background:#eef3ed;color:#557061;padding:10px 22px;font-weight:600;font-size:.85rem; }
+.workspace-tabs button.selected { background:var(--teal);color:white; }
+.admin-content>.section { padding-top:10px; }
+.admin-content .account-form { margin-block:20px; }
+.admin-filters { margin-block:24px;justify-content:flex-start; }
+.message-list { display:grid;gap:18px;margin-top:24px; }
+.message-card { padding:24px; }
+.message-card>.description-text { margin-top:18px; }
+.message-card .section-heading { margin-bottom:12px; }
+.message-card h3 { margin-top:10px; }
+.seller-card { padding:28px; }
+.seller-card .avatar { width:50px;height:50px;font-size:1.2rem;margin-bottom:18px; }
+.seller-card h2 { font-size:1.25rem;margin-bottom:8px; }
+.seller-card p { font-size:.83rem;overflow-wrap:anywhere; }
+.seller-card .button { margin-top:20px; }
+.about-grid { display:grid;grid-template-columns:1fr 1fr;gap:45px;align-items:start; }
+.about-grid img { width:100%;height:400px;object-fit:cover;border-radius:14px; }
+.about-grid h2 { margin-bottom:18px; }
+.about-grid p { margin-bottom:25px;line-height:1.9; }
+.bid-adjust { display:flex;gap:10px;margin-top:15px; }
+.seller-byline { font-size:.8rem;margin-bottom:24px; }
+.category-links { display:flex;gap:12px;flex-wrap:wrap;margin-top:30px; }
+.footer-links { flex-wrap:wrap; }
+.filter-group { flex-wrap:wrap; }
+@media(max-width:1050px) { .nav{gap:14px;font-size:.8rem}.auth-layout{gap:35px}.filter-bar{flex-wrap:wrap}.filter-group{flex:1}.filter-group label{min-width:140px} }
+@media(max-width:850px) { .nav-wrap{flex-wrap:wrap;padding-block:18px}.nav{flex-wrap:wrap;gap:18px}.auth-layout{gap:25px}.account-form{padding:25px}.account-fields{grid-template-columns:1fr}.role-options{gap:9px}.role-option strong{font-size:.8rem}.role-options .role-option{padding:14px 10px}.role-option input{right:8px;top:10px}.about-grid{gap:25px} }
+@media(max-width:760px) { .auth-layout{grid-template-columns:1fr;padding-block:35px;gap:20px}.auth-intro h1{font-size:2.6rem}.auth-intro .tips{display:none}.account-form{padding:23px}.account-fields{grid-template-columns:1fr 1fr}.account-nav small{display:inline-block;margin-left:10px}.nav-wrap{padding-block:0;flex-wrap:nowrap}.workspace-tabs{gap:8px}.workspace-tabs button{padding:10px 15px}.admin-filters{flex-direction:row}.admin-filters label{flex:1;min-width:0}.about-grid{grid-template-columns:1fr}.about-grid img{height:280px}.filter-group label{min-width:0;width:auto;flex:1 1 40%}.footer-links{gap:14px!important} }
+@media(max-width:420px) { .account-fields{grid-template-columns:1fr}.role-options .role-option{padding:14px}.role-option strong{font-size:.78rem}.role-option small{font-size:.64rem}.workspace-tabs button{font-size:.78rem;padding:9px 12px}.auth-intro h1{font-size:2.3rem} }

@@ -1,7 +1,9 @@
 
 # AuctionXPress React client
 
-A responsive React + Vite frontend using the installed React Router and plain CSS. All auctions, prices, dashboard counts, and bid history come from the Express API. There is no seeded/fake auction data, authentication, or payment processing. The dashboard is a shared management view, not a personal account.
+A responsive React + Vite frontend using the installed React Router and plain CSS. All auctions, prices, dashboard counts, and bid history come from the Express API. Buyer/seller signup, login, role-based workspaces, and an admin panel are implemented. No fake auction data or real payment processing is used.
+
+See [FEATURES.md](../FEATURES.md) for the complete ZIP feature mapping, account permissions and test steps. Sign up at `/signup`, log in at `/login`, and visit `/admin` as the demo administrator **admin / admin**, created on backend startup.
 
 ## Run locally
 
@@ -41,7 +43,11 @@ VITE_CURRENCY=LKR
 | `/auctions/:id` | Auction details, live countdown, prices, bid form, newest-first bid history, edit/delete actions |
 | `/auctions/new` | Validated creation form and image preview |
 | `/auctions/:id/edit` | Shared form prefilled from the API; starting price locked if bids exist |
-| `/dashboard` | Actual marketplace counts and management table |
+| `/dashboard` | Seller-owned listings/counts, or the buyer's own bid history |
+| `/signup`, `/login`, `/profile` | Role selection, sessions and profile/password editing |
+| `/admin` | Approval queue, items, buyers, sellers, admins and contact inbox |
+| `/sellers`, `/contact`, `/about` | Seller directory, contact form and About Us |
+| `/auctions/:id/checkout` | Winner-only card/bank demo checkout and receipt |
 | Any other path | Friendly not-found state |
 
 Search submits with Enter or the Search button. Filters apply immediately and are encoded in the URL, so back/forward and copied links preserve them. Search matches title text, categories match exactly, and sort choices use the server's supported fields. Missing/broken images show a neutral fallback, not a stock auction image.
@@ -80,7 +86,7 @@ All paths below are relative to `client`.
 | `package.json` (updated) | Added the dependency-free Node test command |
 | `README.md` (replaced) | This setup, file, and verification guide |
 
-The existing `src/main.jsx` mounts the app with React StrictMode. No backend files or dependency versions were changed for this frontend work.
+The existing `src/main.jsx` mounts the app with React StrictMode. The account update extends backend models/routes and includes credentials with API requests. Dependency versions are unchanged. Additional files are explained in [FEATURES.md](../FEATURES.md).
 
 ## Automated checks
 
@@ -104,10 +110,10 @@ If deploying later, configure the static host to serve `index.html` for client r
 ## Manual browser checklist
 
 1. **Empty state:** With no auctions in your demo database, Home/Browse/Dashboard show empty states and actual zero counts. No sample listings should appear.
-2. **Create:** Open Create auction. Submit blank fields, a negative price, an invalid URL, and a past end time; verify field messages. Create a valid auction with a future end time. Confirm navigation to Details, the success message, correct values, and its appearance in Browse/Dashboard. Test without an image and with an inaccessible image URL to check fallbacks.
+2. **Create:** Sign up as seller and open Create auction. Test invalid fields, then create a valid future auction. Confirm it appears in your dashboard as awaiting approval. Log in as admin in another session and approve it before checking public Browse. Test image URLs, uploads and fallbacks.
 3. **Browse:** Create items with different titles/categories. Search part of a title, combine category and status, and change each sort. Copy/reload the filtered URL and use back/forward. Try a search with no matches and clear filters.
 4. **Edit:** Before bidding, change title/category/price and save; verify the price follows the new starting price. An unchanged expired end time may be preserved when editing other fields; a changed end time must be future. Direct current-price editing is never offered.
-5. **Bid:** Try a blank/overlong name and amounts equal to or below the current price. Submit a valid higher amount; check the success message, new current price, and history. Open a second tab, submit a competing bid, and verify refresh/409 error handling in the first tab. All rejection messages come from the API.
+5. **Bid:** Log in as buyer and test equal/lower amounts, then a valid higher bid. Check the new price and history. Bidder identity comes from the account. Use another buyer session to test competing bids and refresh/409 handling.
 6. **Protection:** After bidding, Edit locks the starting price. Open Delete confirmation: Keep auction/Escape cancels; confirming Delete shows the backend's bid-history restriction. For an auction with no bids, confirm deletion and verify its disappearance and updated dashboard counts.
 7. **Close:** Create a separate auction ending a minute from now. Leave Details open until the countdown reaches zero; status becomes closed and the bid fields disappear. Find it using the Closed filter after refresh. Do not rely on manually changing the device clock; the API uses server time.
 8. **Errors:** Stop the backend and refresh a page: an actionable network error and retry button appear. Restart the backend and retry. Visit an invalid/missing auction ID and an unknown frontend URL. Ensure malformed API responses produce a readable error.

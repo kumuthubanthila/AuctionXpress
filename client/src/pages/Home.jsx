@@ -3,7 +3,7 @@ import useApi from '../hooks/useApi'
 import useNow from '../hooks/useNow'
 import AuctionCard, { AuctionImage, StatusBadge } from '../components/AuctionCard'
 import { EmptyState, ErrorNotice, Loading } from '../components/Feedback'
-import { isOpen, money } from '../lib/auction'
+import { isOpen, isUpcoming, money } from '../lib/auction'
 
 export default function Home() {
   const { data, error, loading, refresh } = useApi('/auctions?sort=endsAt', 30000)
@@ -18,5 +18,6 @@ export default function Home() {
     <div className="value-strip"><div><span>01</span><p><strong>Find your next favorite</strong>Browse items from the community.</p></div><div><span>02</span><p><strong>Join the bidding</strong>Watch the price. Make your move.</p></div><div><span>03</span><p><strong>Put your finds on the map</strong>Create a listing in a few simple steps.</p></div></div>
     <section className="section"><div className="section-heading"><div><p className="eyebrow">ON THE BLOCK</p><h2>Closing soon. Worth a look.</h2><p>Fresh opportunities, with the clock ticking.</p></div><Link className="text-link" to="/auctions?status=open&sort=endsAt">View all open auctions ↗</Link></div><ErrorNotice error={error} retry={refresh} />{loading && !data ? <Loading /> : data && (open.length ? <div className="auction-grid">{open.slice(0, 3).map((auction) => <AuctionCard key={auction._id} auction={auction} now={now} />)}</div> : <EmptyState title="The next great find starts with you." message="There are no open auctions right now. Create a listing or explore past auctions." />)}</section>
     <section className="seller-banner"><div><p className="eyebrow">MAKE ROOM FOR SOMETHING NEW</p><h2>Your next chapter starts here.</h2><p>Turn something you own into someone else’s great discovery.</p></div><Link to="/auctions/new" className="button light">Create your first auction ↗</Link></section>
+    {data && <section className="section"><div className="section-heading"><div><p className="eyebrow">PLAN YOUR NEXT MOVE</p><h2>Upcoming auctions</h2></div><Link className="text-link" to="/auctions?status=upcoming">View upcoming auctions ↗</Link></div>{auctions.some((item) => isUpcoming(item, now)) ? <div className="auction-grid">{auctions.filter((item) => isUpcoming(item, now)).slice(0,3).map((auction) => <AuctionCard key={auction._id} auction={auction} now={now} />)}</div> : <p>No scheduled auctions yet. Check back for the next discovery.</p>}<div className="category-links">{[...new Set(auctions.map((item) => item.category))].map((category) => <Link className="button secondary small" key={category} to={`/auctions?category=${encodeURIComponent(category)}`}>{category} ↗</Link>)}</div></section>}
   </>
 }

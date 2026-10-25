@@ -6,10 +6,22 @@ import { ErrorNotice } from './Feedback'
 import { AuctionImage } from './AuctionCard'
 
 export default function AuctionForm({ initial, hasBids = false, onSaved }) {
-  const [values, setValues] = useState(() => initial ? { title: initial.title, description: initial.description, category: initial.category, imageUrl: initial.imageUrl || '', startingPrice: String(initial.startingPrice), endsAt: localDateInput(initial.endsAt) } : { title: '', description: '', category: '', imageUrl: '', startingPrice: '', endsAt: '' })
+  const [values, setValues] = useState(() => initial ? { title: initial.title, description: initial.description, category: initial.category, imageUrl: initial.imageUrl || '', startingPrice: String(initial.startingPrice), startsAt: initial.startsAt ? localDateInput(initial.startsAt) : '', endsAt: localDateInput(initial.endsAt) } : { title: '', description: '', category: '', imageUrl: '', startingPrice: '', startsAt: '', endsAt: '' })
   const [errors, setErrors] = useState({})
   const [failure, setFailure] = useState(null)
   const [pending, setPending] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  async function upload(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) { setFailure(new Error('Choose a PNG, JPEG, or WebP image up to 5 MB.')); return }
+    setUploading(true); setFailure(null)
+    try {
+      const data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('Unable to read image')); reader.readAsDataURL(file) })
+      const response = await api('/uploads', { method: 'POST', body: { data } })
+      setValues((old) => ({ ...old, imageUrl: response.data.imageUrl }))
+    } catch (error) { setFailure(error) } finally { setUploading(false) }
+  }
   function update(event) {
     const { name, value } = event.target
     setValues((old) => ({ ...old, [name]: value }))
@@ -19,7 +31,7 @@ export default function AuctionForm({ initial, hasBids = false, onSaved }) {
   const hint = (name) => errors[name] && <span className="field-error" id={`${name}-error`}>{errors[name]}</span>
   async function submit(event) {
     event.preventDefault()
-    if (pending) return
+    if (pending || uploading) return
     const validation = validateAuction(values, initial)
     setErrors(validation)
     setFailure(null)
@@ -33,13 +45,14 @@ export default function AuctionForm({ initial, hasBids = false, onSaved }) {
       onSaved(response.data)
     } catch (error) { setFailure(error); setErrors(error.errors || {}); setPending(false) }
   }
-  return <div className="editor-layout"><form className="panel auction-form" onSubmit={submit} noValidate><ErrorNotice error={failure} /><fieldset disabled={pending}>
+  return <div className="editor-layout"><form className="panel auction-form" onSubmit={submit} noValidate><ErrorNotice error={failure} /><fieldset disabled={pending || uploading}>
     <div className="form-section-title"><span>01</span><div><h2>The essentials</h2><p>Give your item a title and tell its story.</p></div></div>
     <label htmlFor="title">Auction title <span>*</span></label><input {...props('title')} maxLength={200} placeholder="Give your item a clear, descriptive title" required />{hint('title')}
     <label htmlFor="description">Description <span>*</span></label><textarea {...props('description')} rows={6} maxLength={10000} placeholder="Describe the condition, features, and anything bidders should know…" required />{hint('description')}
     <label htmlFor="category">Category <span>*</span></label><input {...props('category')} list="category-suggestions" maxLength={100} placeholder="Choose or enter a category" required /><datalist id="category-suggestions">{suggestedCategories.map((category) => <option key={category} value={category} />)}</datalist>{hint('category')}
-    <label htmlFor="imageUrl">Image URL <small>Optional</small></label><input {...props('imageUrl')} type="url" placeholder="https://example.com/your-item.jpg" />{hint('imageUrl')}<p className="field-hint">Use a publicly accessible HTTP or HTTPS image. No upload is required.</p>
+    <label htmlFor="imageUrl">Image URL <small>Optional</small></label><input {...props('imageUrl')} type="url" placeholder="https://example.com/your-item.jpg" />{hint('imageUrl')}<label htmlFor="image-file">Or upload a photo</label><input id="image-file" type="file" accept="image/png,image/jpeg,image/webp" onChange={upload} /><p className="field-hint" role="status">{uploading ? 'Uploading image…' : 'Use an image URL, or upload PNG/JPEG/WebP up to 5 MB.'}</p>
     <div className="form-section-title second"><span>02</span><div><h2>Price & timing</h2><p>Set the opening price and when bidding closes.</p></div></div>
+    <label htmlFor="startsAt">Start date & time <small>Optional · starts immediately if blank</small></label><input {...props('startsAt')} type="datetime-local" step="1" disabled={hasBids || pending || uploading} />{hint('startsAt')}
     <div className="form-grid"><div><label htmlFor="startingPrice">Starting price ({currency}) <span>*</span></label><input {...props('startingPrice')} type="number" min="0" step="any" disabled={pending || hasBids} placeholder="0.00" required />{hint('startingPrice')}</div><div><label htmlFor="endsAt">End date & time <span>*</span></label><input {...props('endsAt')} type="datetime-local" step="1" required />{hint('endsAt')}</div></div>
     <p className="field-hint">Times use your device’s timezone. {hasBids ? 'The starting price is locked because this auction has bids.' : 'Bids must exceed the current price. The starting price is locked after the first bid.'}</p>
     <div className="form-footer"><span>* Required fields</span><div className="action-row"><Link className="button secondary" to={initial ? `/auctions/${initial._id}` : '/dashboard'} aria-disabled={pending} onClick={(event) => pending && event.preventDefault()}>Cancel</Link><button className="button" disabled={pending}>{pending ? 'Saving auction…' : initial ? 'Save changes ↗' : 'Publish auction ↗'}</button></div></div>
