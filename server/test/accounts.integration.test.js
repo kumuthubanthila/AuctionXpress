@@ -81,9 +81,40 @@ test('Atlas accounts, seller ownership, approval, bids, winner checkout and admi
   assert.equal((await request(`/admin/messages/${inbox.body.data[0]._id}`,'DELETE',undefined,admin.cookie)).status,200);
   const added = await request('/admin/users','POST',{...profile,username:'new_admin',role:'admin'},admin.cookie);
   assert.equal(added.status,201);
+  const secondAdmin = await request('/auth/login','POST',{username:'new_admin',password:profile.password});
+  assert.equal((await request(`/admin/users/${added.body.data._id}`,'DELETE',undefined,secondAdmin.cookie)).status,409);
+  assert.equal((await request(`/admin/users/${admin.body.data._id}`,'DELETE',undefined,secondAdmin.cookie)).status,409);
   assert.equal((await request(`/admin/users/${other.body.data._id}`,'PUT',{firstName:'Edited'},admin.cookie)).status,200);
+  // If session revocation fails, the transaction must restore the user as well.
+  const deleteSessions = Session.deleteMany;
+  Session.deleteMany = async () => { throw new Error('Simulated session cleanup failure'); };
+  try {
+    assert.equal((await request(`/admin/users/${other.body.data._id}`,'DELETE',undefined,admin.cookie)).status,500);
+  } finally { Session.deleteMany = deleteSessions; }
+  assert.ok(await User.exists({_id:other.body.data._id}));
+  assert.equal((await request('/auth/me','GET',undefined,other.cookie)).body.data._id,other.body.data._id);
   assert.equal((await request(`/admin/users/${other.body.data._id}`,'DELETE',undefined,admin.cookie)).status,200);
+  assert.equal(await User.findById(other.body.data._id),null);
+  assert.equal(await Session.countDocuments({userId:other.body.data._id}),0);
+  assert.equal((await request('/admin/users?role=seller','GET',undefined,admin.cookie)).body.data.some((user) => user._id === other.body.data._id),false);
   assert.equal((await request('/auth/me','GET',undefined,other.cookie)).body.data,null);
+  assert.equal((await request('/auth/login','POST',{username:'other_seller',password:profile.password})).status,401);
+  assert.equal((await request(`/admin/users/${other.body.data._id}`,'DELETE',undefined,admin.cookie)).status,404);
+  // Legacy inactive accounts can be deleted too, releasing their usernames.
+  const inactive = await User.create({...profile, username:'inactive_user',role:'buyer',active:false,passwordHash:'unused'});
+  assert.equal((await request(`/admin/users/${inactive.id}`,'DELETE',undefined,admin.cookie)).status,200);
+  assert.equal((await request('/auth/signup','POST',{...profile,username:'inactive_user',role:'buyer'})).status,201);
+  // Delete accounts with history without cascading into financial/bid records.
+  const historical = { auctions:await Auction.countDocuments(), bids:await Bid.countDocuments(), payments:await Payment.countDocuments() };
+  assert.equal((await request(`/admin/users/${seller.body.data._id}`,'DELETE',undefined,admin.cookie)).status,200);
+  assert.equal((await request(`/admin/users/${buyer.body.data._id}`,'DELETE',undefined,admin.cookie)).status,200);
+  assert.equal(await User.findById(seller.body.data._id),null);
+  assert.equal(await User.findById(buyer.body.data._id),null);
+  assert.equal(await Auction.countDocuments(),historical.auctions);
+  assert.equal(await Bid.countDocuments(),historical.bids);
+  assert.equal(await Payment.countDocuments(),historical.payments);
+  assert.equal((await Bid.findOne({auctionId:id})).bidderName,'buyer');
+  assert.equal((await Auction.findById(id)).sellerName,'seller');
   assert.equal((await request('/auth/logout','POST',undefined,buyer.cookie)).status,200);
   assert.equal((await request('/auth/me','GET',undefined,buyer.cookie)).body.data,null);
 });

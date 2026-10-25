@@ -4,23 +4,9 @@ import useApi from '../hooks/useApi'
 import { api } from '../lib/api'
 import { dateTime } from '../lib/auction'
 import { ErrorNotice, Loading, EmptyState } from '../components/Feedback'
-import UserForm from '../components/UserForm'
+import Users from '../components/AdminUsers'
 import Dashboard from './Dashboard'
 
-function Users({ role }) {
-  const resource = useApi(`/admin/users?role=${role}`)
-  const [editing, setEditing] = useState(null)
-  const [adding, setAdding] = useState(false)
-  const [error, setError] = useState(null)
-  const [pending, setPending] = useState(false)
-  async function remove(user) {
-    if (!window.confirm(`Deactivate ${user.username}? Their auction and bid history will be kept.`)) return
-    setPending(true); setError(null)
-    try { await api(`/admin/users/${user._id}`, { method: 'DELETE' }); resource.refresh() }
-    catch (failure) { setError(failure) } finally { setPending(false) }
-  }
-  return <><div className="section-heading"><h2>{role[0].toUpperCase() + role.slice(1)} accounts</h2><button className="button small" onClick={() => { setAdding(true); setEditing(null) }}>Add {role} +</button></div><ErrorNotice error={error || resource.error} retry={resource.refresh} />{(adding || editing) && <UserForm key={editing?._id || 'new'} role={role} admin initial={editing} onCancel={() => { setAdding(false); setEditing(null) }} onSaved={() => { setAdding(false); setEditing(null); resource.refresh() }} />}{resource.loading ? <Loading label="Loading accounts…" /> : resource.data && <div className="table-wrap panel"><table><thead><tr><th>Username / name</th><th>Email / contact</th><th>Status</th><th>Actions</th></tr></thead><tbody>{resource.data.data.map((user) => <tr key={user._id}><td><strong>{user.username}</strong><small>{user.firstName} {user.lastName}</small></td><td>{user.email}<small>{user.contactNo}</small></td><td>{user.active ? 'Active' : 'Deactivated'}</td><td><div className="action-row"><button className="button secondary small" onClick={() => { setEditing(user); setAdding(false) }}>Edit</button>{role === 'seller' && <Link className="text-link" to={`/admin?tab=items&seller=${encodeURIComponent(user.username)}`}>View items</Link>}<button className="button danger-ghost small" disabled={pending || !user.active || user.username === 'admin'} onClick={() => remove(user)}>Remove</button></div></td></tr>)}{!resource.data.data.length && <tr><td colSpan="4">No {role} accounts yet.</td></tr>}</tbody></table></div>}</>
-}
 function Approvals() {
   const [category, setCategory] = useState('')
   const [approval, setApproval] = useState('waiting')

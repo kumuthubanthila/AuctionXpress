@@ -43,7 +43,7 @@ The password is stored as a salted scrypt hash. Startup never overwrites an exis
 | Admin home/items/add/edit/remove | Admin Items contains the marketplace dashboard with create/edit/delete actions and seller-specific filtering |
 | Admin buyers/sellers/admins lists | Admin tabs list accounts, add accounts, edit profiles/passwords, and remove accounts |
 | Admin seller's items | Sellers tab has a View items action filtering the admin's item table |
-| Admin remove accounts | Implemented as deactivation and session revocation, retaining auction/bid references instead of orphaning history |
+| Admin delete accounts | Permanent account deletion and session revocation in one transaction; auction/bid history is retained |
 | About Us / Our Mission | `/about` |
 | Buyer/seller Contact Us | `/contact`; authenticated contact forms save messages with the sender's role |
 | Admin messages | Admin Messages inbox displays name, role, email, subject, message, time and removal action |
@@ -62,7 +62,7 @@ The ZIP's card and bank forms only displayed success alerts. The MERN version ex
 - Legacy auctions remain visible as approved and unowned. Only admins can edit/remove them; no automatic reassignment or destructive migration is performed.
 - Seller edits before bidding return a listing to the approval queue. Once bids exist, the starting price/start time cannot change, deletion is rejected, and approval cannot be revoked. Existing end-date and price validation and transactional bidding are preserved.
 - A demo-settled auction cannot be edited/reopened. Result/checkout derive the winner from accepted bid records, not client claims.
-- Deactivated accounts cannot log in, and their sessions are revoked. Existing records are retained.
+- Deleted accounts are removed from the user collection and cannot log in. All their sessions are revoked in the same transaction. Auction, bid, message and demo-payment records retain their original account IDs and stored names as history; deleting an account does not delete these records. Auctions of deleted sellers remain manageable by admins. Previously deactivated accounts can also be permanently deleted. The deleted username becomes available for a new account with a new ID.
 - Uploaded files live in ignored `server/uploads/` and are served by Express. Keep that directory if you want photos to survive a server move; MongoDB stores their URLs. A future hosted setup needs persistent upload storage and a suitable `PUBLIC_API_URL`.
 
 ## New/extended backend API
@@ -79,7 +79,7 @@ The ZIP's card and bank forms only displayed success alerts. The MERN version ex
 | `POST /api/uploads` | Seller/admin: `{data: "data:image/png;base64,..."}` |
 | `POST /api/messages` | Logged in: `{name,email,subject,message}` |
 | `GET/POST /api/admin/users` | Admin: list/create accounts; optional `?role=buyer|seller|admin` |
-| `PUT/DELETE /api/admin/users/:id` | Admin: edit/deactivate an account |
+| `PUT/DELETE /api/admin/users/:id` | Admin: edit/permanently delete an account (main admin and self protected) |
 | `GET /api/admin/messages` | Admin: contact inbox |
 | `DELETE /api/admin/messages/:id` | Admin: remove a message |
 | `PATCH /api/auctions/:id/approval` | Admin: `{approval:"waiting"|"approved"|"not-approved"}` |
@@ -98,7 +98,7 @@ Errors remain JSON: 400 invalid fields/ID, 401 login required/invalid login, 403
 4. Sign up as buyer in a separate session. Filter Browse by seller/category and submit a bid above the current price. Verify that the stored bidder name matches the account, not a custom input. Equal/lower bids fail, sellers cannot bid, and other sellers cannot edit/delete the item.
 5. Verify My bids, seller bid history, and the admin's Items view. A listing with bids rejects deletion, starting-price changes, and approval revocation.
 6. Test scheduling with another approved item starting a minute from now: it is Upcoming, rejects early bids, then opens. Wait for an auction to end and confirm the winning buyer sees Demo checkout. Try both methods on separate won auctions, enter fictional references, and verify persisted receipts. Losing buyers cannot check out.
-7. Update profiles/passwords, send a Contact Us message as buyer/seller, and inspect/remove it from the admin inbox. Add/edit/deactivate a disposable account as admin. A deactivated account's old session no longer works.
+7. Update profiles/passwords, send a Contact Us message as buyer/seller, and inspect/remove it from the admin inbox. Add/edit a disposable account as admin. Click Delete: cancel first to verify nothing changes, then confirm to delete it. Verify a success message and immediate row removal, reload to confirm persistence, and check that old sessions/login no longer work. Previously inactive accounts can be deleted too. The main admin and your own account are protected.
 8. Try opening `/admin` as a buyer, POSTing an admin signup role, and calling admin endpoints without a cookie. All must fail/redirect. Check mobile signup, login, admin tabs, tables and image uploads.
 
 Postman: POST `/api/auth/login` with JSON `{"username":"admin","password":"admin"}`. Leave Postman's cookie jar enabled for subsequent calls. Use separate cookie jars or clear cookies when switching roles. POST `/api/auth/signup` uses the signup fields above. There is no Bearer token to copy.
@@ -129,6 +129,7 @@ Offline tests mock database operations and test hashing, login cookies, role bou
 - `server/app.js`: credentialed CORS, uploads, auth and community routes. `server/server.js`: loads environment before app setup and ensures the admin after connecting.
 - `client/src/context/AuthContext.jsx`: session state, login/logout and protected routes.
 - New frontend pages: `Auth.jsx`, `Profile.jsx`, `Admin.jsx`, `Sellers.jsx`, `Contact.jsx`, `About.jsx`, `Checkout.jsx`.
+- `client/src/components/AdminUsers.jsx` and `DeleteAccountDialog.jsx`: account table, protected delete actions, accessible confirmation, pending/error states and immediate success feedback.
 - `client/src/components/UserForm.jsx`: shared profile/admin-account form. Existing Layout, AuctionForm, BidForm, auction cards, pages, styles and API client were extended.
 - New tests: `server/test/auth.test.js`, `server/test/accounts.integration.test.js`; `server/test-support/auth.js` adapts prior CRUD/bid tests to authenticated roles. Frontend render tests cover signup, account/admin screens and protected UI.
 - `.gitignore` excludes uploaded files; no environment credentials were changed.

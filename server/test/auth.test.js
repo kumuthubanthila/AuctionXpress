@@ -42,6 +42,11 @@ test('account HTTP flow, admin login, role boundaries, profile and contact inbox
     return user?.active ? user : null;
   } }));
   t.mock.method(User, 'findById', async (id) => [...accounts.values()].find((user) => user.id === String(id)) || null);
+  t.mock.method(User, 'deleteOne', async ({ _id }) => {
+    const user = [...accounts.values()].find((entry) => entry.id === String(_id));
+    if (user) accounts.delete(user.username);
+    return { deletedCount: user ? 1 : 0 };
+  });
   t.mock.method(User, 'find', (filter) => ({ sort: async () => [...accounts.values()].filter((user) => !filter.role || user.role === filter.role) }));
   t.mock.method(Session, 'create', async (data) => { sessions.set(data.tokenHash, data); return data; });
   t.mock.method(Session, 'findOne', ({ tokenHash: key }) => ({ populate: async () => {
@@ -50,7 +55,9 @@ test('account HTTP flow, admin login, role boundaries, profile and contact inbox
     return user ? { userId: user } : null;
   } }));
   t.mock.method(Session, 'deleteOne', async ({ tokenHash: key }) => sessions.delete(key));
-  t.mock.method(Session, 'deleteMany', async () => {});
+  t.mock.method(Session, 'deleteMany', async ({ userId }) => {
+    for (const [key, session] of sessions) if (String(session.userId) === String(userId)) sessions.delete(key);
+  });
   t.mock.method(Message, 'create', async (data) => { const message = new Message(data); await message.validate(); inbox.push(message); return message; });
   t.mock.method(Message, 'find', () => ({ sort: async () => inbox }));
   t.mock.method(mongoose.connection, 'transaction', async (callback) => callback({}));
@@ -110,6 +117,20 @@ test('account HTTP flow, admin login, role boundaries, profile and contact inbox
   assert.equal((await request('/messages','POST',{ name: 'Buyer', email: 'test@example.com', subject: 'Help', message: 'Please help' },buyer.cookie)).status, 201);
   assert.equal((await request('/admin/messages','GET',undefined,admin.cookie)).body.data.length, 1);
   assert.equal((await request(`/admin/users/${admin.body.data._id}`,'DELETE',undefined,admin.cookie)).status, 409);
+  const disposable = await request('/auth/signup','POST',{ ...profile, username: 'disposable', role: 'buyer' });
+  const deletePath = `/admin/users/${disposable.body.data._id}`;
+  assert.equal((await request(deletePath,'DELETE')).status,401);
+  assert.equal((await request(deletePath,'DELETE',undefined,buyer.cookie)).status,403);
+  const deleted = await request(deletePath,'DELETE',undefined,admin.cookie);
+  assert.equal(deleted.status,200);
+  assert.match(deleted.body.message,/deleted/);
+  assert.equal(accounts.has('disposable'),false);
+  assert.equal((await request('/admin/users','GET',undefined,admin.cookie)).body.data.some((user) => user._id === disposable.body.data._id),false);
+  assert.equal((await request('/auth/me','GET',undefined,disposable.cookie)).body.data,null);
+  assert.equal((await request('/auth/login','POST',{username:'disposable',password:profile.password})).status,401);
+  assert.equal((await request(deletePath,'DELETE',undefined,admin.cookie)).status,404);
+  assert.equal((await request('/admin/users/invalid','DELETE',undefined,admin.cookie)).status,400);
+  assert.equal((await request('/auth/signup','POST',{ ...profile, username: 'disposable', role: 'buyer' })).status,201);
   const loggedOut = await request('/auth/logout','POST',undefined,buyer.cookie);
   assert.equal(loggedOut.status, 200);
   assert.equal(sessions.has(tokenHash(buyer.cookie.split('=')[1])), false);

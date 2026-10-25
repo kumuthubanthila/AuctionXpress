@@ -40,14 +40,20 @@ export async function editUser(req, res) {
   if (fields.passwordHash) await Session.deleteMany({ userId: user._id });
   res.json({ success: true, data: user });
 }
-export async function deactivateUser(req, res) {
+export async function deleteUser(req, res) {
   objectId(req.params.id);
-  const user = await User.findById(req.params.id);
-  if (!user) throw new HttpError(404, 'User not found');
-  if (user.username === 'admin' || String(user._id) === String(req.user._id)) throw new HttpError(409, 'The demo admin and your own account cannot be removed');
-  user.active = false; await user.save();
-  await Session.deleteMany({ userId: user._id });
-  res.json({ success: true, message: 'Account deactivated. Auction and bid records are retained.' });
+  const deleted = await mongoose.connection.transaction(async (session) => {
+    const user = await User.findById(req.params.id, null, { session });
+    if (!user) throw new HttpError(404, 'User not found');
+    if (user.username === 'admin') throw new HttpError(409, 'The main admin account cannot be deleted');
+    if (String(user._id) === String(req.user._id)) throw new HttpError(409, 'You cannot delete your own account while logged in');
+    // Preserve auction/bid/payment records and their stored names for history.
+    // Account removal and revoking all its sessions must succeed together.
+    await User.deleteOne({ _id: user._id }, { session });
+    await Session.deleteMany({ userId: user._id }, { session });
+    return { _id: user._id, username: user.username };
+  }, { readConcern: { level: 'snapshot' }, writeConcern: { w: 'majority' } });
+  res.json({ success: true, data: deleted, message: `Account "${deleted.username}" deleted. Auction and bid history is retained.` });
 }
 export async function sendMessage(req, res) {
   const body = req.body;

@@ -41,5 +41,16 @@ test('reusable components and routed pages render without runtime errors', async
     assert.doesNotMatch(withUser(Protected, buyer, { roles: ['admin'], children: h('div', null, 'secret admin tools') }), /secret admin tools/)
     assert.match(withUser(BidForm, buyer, { auction, open: true }), /value="buyer1"/)
     assert.match(withUser(BidForm, { ...buyer, role: 'seller' }, { auction, open: true }), /buyer accounts/)
+    const { AccountDeleteButton } = await vite.ssrLoadModule('/src/components/AdminUsers.jsx')
+    const currentAdmin = { _id: 'current-admin', username: 'other_admin' }
+    const inactiveAccount = { _id: 'old-buyer', username: 'old_buyer', active: false }
+    assert.doesNotMatch(render(AccountDeleteButton, { account: inactiveAccount, currentUser: currentAdmin }), /disabled/)
+    assert.match(render(AccountDeleteButton, { account: { _id: 'root', username: 'admin' }, currentUser: currentAdmin }), /disabled=""/)
+    assert.match(render(AccountDeleteButton, { account: currentAdmin, currentUser: currentAdmin }), /disabled=""/)
+    const { default: DeleteAccountDialog } = await vite.ssrLoadModule('/src/components/DeleteAccountDialog.jsx')
+    const confirmation = render(DeleteAccountDialog, { account: inactiveAccount, onCancel() {}, onDeleted() {} })
+    assert.match(confirmation, /permanently deleted/)
+    assert.match(confirmation, /Keep account/)
+    assert.match(confirmation, /Delete account/)
   } finally { await vite.close() }
 })
