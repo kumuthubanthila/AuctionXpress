@@ -49,5 +49,7 @@ export async function listBids(req, res) {
   const auction = await Auction.findById(req.params.id);
   if (!auction || !canView(req.user, auction)) throw new HttpError(404, "Auction not found");
   const bids = await Bid.find({ auctionId: req.params.id }).sort({ createdAt: -1, _id: -1 });
-  res.json({ success: true, count: bids.length, data: bids });
+  // Guests can follow price activity, but bidder identities remain private.
+  const data = req.user ? bids : bids.map((bid) => ({ _id: bid._id, auctionId: bid.auctionId, amount: bid.amount, createdAt: bid.createdAt, updatedAt: bid.updatedAt }));
+  res.json({ success: true, count: bids.length, data });
 }

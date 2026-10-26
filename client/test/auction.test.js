@@ -2,6 +2,18 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { auctionPayload, countdown, isOpen, localDateInput, validateAuction, validateBid, money, adjustBidAmount } from '../src/lib/auction.js'
 import { api, ApiError } from '../src/lib/api.js'
+import { openSellerChat, OPEN_MESSAGES_EVENT } from '../src/lib/messaging.js'
+
+test('Message seller opens the pane with the selected auction and seller', (t) => {
+  const previous = globalThis.window
+  const target = new EventTarget()
+  globalThis.window = target
+  t.after(() => { if (previous === undefined) delete globalThis.window; else globalThis.window = previous })
+  let detail
+  target.addEventListener(OPEN_MESSAGES_EVENT, (event) => { detail = event.detail })
+  openSellerChat({ _id:'auction-1', title:'Vintage watch', sellerName:'seller_one' })
+  assert.deepEqual(detail, { auctionId:'auction-1', auctionTitle:'Vintage watch', sellerName:'seller_one' })
+})
 
 const initial = { title: 'Camera', description: 'A test item', category: 'Electronics', imageUrl: '', startingPrice: 10, currentPrice: 20, endsAt: '2035-01-01T00:00:00.000Z' }
 const values = () => ({ ...initial, startingPrice: '10', endsAt: localDateInput(initial.endsAt) })

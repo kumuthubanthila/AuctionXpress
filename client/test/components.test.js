@@ -74,5 +74,22 @@ test('reusable components and routed pages render without runtime errors', async
     assert.match(withUser(MessagesPage, buyer), /Your messages/)
     const { default: Checkout } = await vite.ssrLoadModule('/src/pages/Checkout.jsx')
     assert.doesNotMatch(withUser(Checkout, buyer), /demo/i)
+    const { default: BidOverview } = await vite.ssrLoadModule('/src/components/BidOverview.jsx')
+    const bids = [
+      { _id:'high',bidderId:'buyer2',bidderName:'Leader',amount:30,createdAt:'2030-01-01T10:02:00Z' },
+      { _id:'low',bidderId:'buyer1',bidderName:'First',amount:15,createdAt:'2030-01-01T10:00:00Z' },
+      { _id:'mid',bidderId:'buyer1',bidderName:'First',amount:20,createdAt:'2030-01-01T10:01:00Z' }
+    ]
+    const overview = render(BidOverview, { auction, bids, now:Date.parse('2030-01-01T11:00:00Z') }).replaceAll('<!-- -->','')
+    assert.match(overview,/Current leader: Leader/)
+    assert.match(overview,/Accepted bids<\/span><strong>3/)
+    assert.match(overview,/Participating buyers<\/span><strong>2/)
+    assert.match(overview,/How does bidding work/)
+    assert.match(overview,/Accepted bid number/)
+    assert.match(overview,/type="range"[^>]*max="3"/)
+    assert.doesNotMatch(overview,/NaN|Infinity/)
+    const { default: Graph } = await vite.ssrLoadModule('/src/components/BidProgressionGraph.jsx')
+    assert.doesNotMatch(render(Graph, { auction, bids:[bids[1]] }),/NaN|Infinity/)
+    assert.match(render(BidOverview, { auction, bids, now:Date.parse('2036-01-01'), userId:'buyer2' }),/Winning bidder: Leader \(you\)/)
   } finally { await vite.close() }
 })

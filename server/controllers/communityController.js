@@ -92,7 +92,8 @@ export async function auctionResult(req, res) {
   const ended = auction.endsAt.getTime() <= Date.now();
   const won = Boolean(ended && winner?.bidderId && String(winner.bidderId) === String(req.user?._id));
   const payment = won ? await Payment.findOne({ auctionId: auction._id, buyerId: req.user._id }) : null;
-  res.json({ success: true, data: { currency: auction.currency || 'LKR', ended, winner: ended && winner ? { bidderName: winner.bidderName, amount: winner.amount } : null, won, payment } });
+  const winningBid = ended && winner ? { amount: winner.amount, ...(req.user && { bidderName: winner.bidderName }) } : null;
+  res.json({ success: true, data: { currency: auction.currency || 'LKR', ended, winner: winningBid, won, payment } });
 }
 export async function demoPayment(req, res) {
   objectId(req.params.id);

@@ -18,12 +18,12 @@ export default function AccountMenu({ user, pending, onLogout }) {
     return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape) }
   }, [])
   return <details className="account-menu" ref={menu}>
-    <summary><span className="account-avatar" aria-hidden="true">{user.username[0].toUpperCase()}</span>Account <span className="account-chevron" aria-hidden="true">⌄</span></summary>
+    <summary><span className="account-avatar" aria-hidden="true">{user.username[0].toUpperCase()}</span><span>Account</span><svg className="account-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m4 6 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg></summary>
     <div className="account-menu-panel">
       <div className="account-menu-identity"><strong>{user.username}</strong><small>{user.role} account</small></div>
       <Link to={user.role === 'admin' ? '/admin' : '/dashboard'}>{user.role === 'admin' ? 'Admin panel' : user.role === 'seller' ? 'My listings' : 'My bids'}</Link>
       <Link to="/profile">Profile settings</Link>
-      {['seller', 'admin'].includes(user.role) && <Link to="/auctions/new">Create auction</Link>}
+      {user.role === 'admin' && <Link to="/auctions/new">Create auction</Link>}
       <button type="button" disabled={pending} onClick={onLogout}>{pending ? 'Logging out…' : 'Log out'}</button>
     </div>
   </details>
