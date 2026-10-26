@@ -19,7 +19,7 @@ export async function api(path, { body, ...options } = {}) {
     })
   } catch (error) {
     if (error.name === 'AbortError') throw error
-    throw new ApiError('Unable to reach AuctionXPress. Check that the backend is running and try again.', 0)
+    throw new ApiError('Unable to reach AuctionXpress. Check that the backend is running and try again.', 0)
   }
   let result
   try { result = await response.json() } catch {

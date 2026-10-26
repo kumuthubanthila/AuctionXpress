@@ -34,9 +34,9 @@ export async function editUser(req, res) {
   objectId(req.params.id);
   const user = await User.findById(req.params.id);
   if (!user) throw new HttpError(404, 'User not found');
-  const fields = userFields(req.body);
-  if (fields.password) { fields.passwordHash = await hashPassword(fields.password); delete fields.password; }
-  user.set(fields); await user.save();
+  const fields = userFields(req.body, { admin: true });
+  if ('password' in fields) { fields.passwordHash = await hashPassword(fields.password); delete fields.password; }
+  user.set(fields); await user.save({ validateBeforeSave: false });
   if (fields.passwordHash) await Session.deleteMany({ userId: user._id });
   res.json({ success: true, data: user });
 }

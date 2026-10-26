@@ -85,6 +85,16 @@ test('Atlas accounts, seller ownership, approval, bids, winner checkout and admi
   assert.equal((await request(`/admin/users/${added.body.data._id}`,'DELETE',undefined,secondAdmin.cookie)).status,409);
   assert.equal((await request(`/admin/users/${admin.body.data._id}`,'DELETE',undefined,secondAdmin.cookie)).status,409);
   assert.equal((await request(`/admin/users/${other.body.data._id}`,'PUT',{firstName:'Edited'},admin.cookie)).status,200);
+  const unrestricted = await request(`/admin/users/${other.body.data._id}`,'PUT',{firstName:'',lastName:'',email:'invalid email',contactNo:'',password:''},admin.cookie);
+  assert.equal(unrestricted.status,200);
+  assert.equal(unrestricted.body.data.firstName,'');
+  assert.equal(unrestricted.body.data.email,'invalid email');
+  assert.equal((await request('/auth/me','GET',undefined,other.cookie)).body.data,null);
+  const clearedLogin = await request('/auth/login','POST',{username:'other_seller',password:''});
+  assert.equal(clearedLogin.status,200);
+  other.cookie = clearedLogin.cookie;
+  assert.equal((await request('/auth/login','POST',{username:'other_seller',password:profile.password})).status,401);
+  assert.equal((await request('/auth/profile','PUT',{firstName:''},other.cookie)).status,400);
   // If session revocation fails, the transaction must restore the user as well.
   const deleteSessions = Session.deleteMany;
   Session.deleteMany = async () => { throw new Error('Simulated session cleanup failure'); };

@@ -14,6 +14,12 @@ export function userFields(body, { creating = false, admin = false } = {}) {
     if (typeof body[key] !== 'string') throw new HttpError(400, `${key} must be a string`);
     fields[key] = key === 'password' ? body[key] : body[key].trim();
   }
+  // Only the guarded admin edit endpoint opts out of profile format rules.
+  // Keep the password length compatible with the login endpoint.
+  if (admin && !creating) {
+    if ('password' in fields && fields.password.length > 128) throw new HttpError(400, 'Password cannot exceed 128 characters');
+    return fields;
+  }
   if (creating) {
     fields.username = fields.username?.toLowerCase();
     if (!/^[a-z0-9_]{3,30}$/.test(fields.username || '')) throw new HttpError(400, 'Username must contain 3–30 letters, numbers or underscores');

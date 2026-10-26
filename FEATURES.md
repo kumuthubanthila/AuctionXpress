@@ -58,6 +58,7 @@ The ZIP's card and bank forms only displayed success alerts. The MERN version ex
 
 - Anyone can browse approved auctions and accepted history. Unapproved items are visible only to their seller or an admin.
 - Buyers can bid; bidder identity comes from the session, never from a submitted name. Sellers and admins cannot bid.
+- Admin account edits bypass name/email/contact format and required-field checks. Admins can set a password of 0–128 characters, including a blank password. In the edit form, check **Replace password** to change or clear it; unchecked preserves the existing password. Only the guarded admin endpoint has this exception. New account signup/creation and users' own profile edits keep their validation. Login always verifies the saved password, including an empty one if an admin explicitly cleared it. Usernames and roles remain protected from profile edits.
 - Sellers can create and manage only their own auctions. Admins can manage all items, including legacy listings without owners.
 - Legacy auctions remain visible as approved and unowned. Only admins can edit/remove them; no automatic reassignment or destructive migration is performed.
 - Seller edits before bidding return a listing to the approval queue. Once bids exist, the starting price/start time cannot change, deletion is rejected, and approval cannot be revoked. Existing end-date and price validation and transactional bidding are preserved.

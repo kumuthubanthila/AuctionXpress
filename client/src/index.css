@@ -1,7 +1,7 @@
 :root {
   font-family:Inter,'Segoe UI',Arial,sans-serif;
-  color:#192c32;
-  background:#fbfcfa;
+  color:#322d29;
+  background:#faf8f5;
   font-synthesis:none;
   text-rendering:optimizeLegibility;
   -webkit-font-smoothing:antialiased;
@@ -9,12 +9,15 @@
   font-size:15px;
   line-height:1.6;
   color-scheme:light;
-  --ink:#142d35;
-  --muted:#65747a;
-  --teal:#0b6a58;
-  --mint:#e9f3ed;
-  --line:#dfe6e2;
+  --ink:#322d29;
+  --muted:#756b62;
+  --accent:#90553c;
+  --accent-soft:#f3e9da;
+  --line:#dfd5c9;
   --paper:#fff
+}
+html {
+  scroll-padding-top:calc(var(--top-pane-height, 130px) + 18px);
 }
 * {
   box-sizing:border-box
@@ -45,7 +48,7 @@ a {
   text-decoration:none
 }
 a:hover {
-  color:var(--teal)
+  color:var(--accent)
 }
 img {
   display:block;
@@ -92,7 +95,7 @@ label {
 }
 input,textarea,select {
   width:100%;
-  border:1px solid #ccd8d1;
+  border:1px solid #d6c9b9;
   border-radius:7px;
   background:white;
   color:var(--ink);
@@ -101,27 +104,27 @@ input,textarea,select {
   min-width:0
 }
 input:focus,textarea:focus,select:focus {
-  border-color:var(--teal);
-  box-shadow:0 0 0 3px #0b6a581b
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px #90553c22
 }
 input[aria-invalid=true],textarea[aria-invalid=true] {
   border-color:#b93e3e
 }
 input:disabled {
-  background:#f1f4f1;
-  color:#697874
+  background:#f1ece5;
+  color:#7c7065
 }
 textarea {
   resize:vertical
 }
 ::placeholder {
-  color:#87928f
+  color:#8b7f73
 }
 time {
   font-variant-numeric:tabular-nums
 }
 a:focus-visible,button:focus-visible {
-  outline:3px solid #36a58b;
+  outline:3px solid #90553c;
   outline-offset:4px;
   border-radius:4px
 }
@@ -129,7 +132,7 @@ main:focus {
   outline:none
 }
 ::selection {
-  background:#cce7d7
+  background:#f0daae
 }
 .sr-only {
   position:absolute;

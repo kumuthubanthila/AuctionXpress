@@ -31,7 +31,7 @@ test('account HTTP flow, admin login, role boundaries, profile and contact inbox
   const make = async (data) => {
     if (accounts.has(data.username)) throw Object.assign(new Error('duplicate'), { code: 11000 });
     const user = new User(data); await user.validate();
-    user.save = async () => { await user.validate(); return user; };
+    user.save = async (options) => { if (options?.validateBeforeSave !== false) await user.validate(); return user; };
     accounts.set(user.username, user); return user;
   };
   t.mock.method(User, 'init', async () => {});
@@ -131,6 +131,23 @@ test('account HTTP flow, admin login, role boundaries, profile and contact inbox
   assert.equal((await request(deletePath,'DELETE',undefined,admin.cookie)).status,404);
   assert.equal((await request('/admin/users/invalid','DELETE',undefined,admin.cookie)).status,400);
   assert.equal((await request('/auth/signup','POST',{ ...profile, username: 'disposable', role: 'buyer' })).status,201);
+  const edited = accounts.get('disposable');
+  const editPath = `/admin/users/${edited.id}`;
+  const originalHash = edited.passwordHash;
+  assert.equal((await request(editPath,'PUT',{firstName:'',lastName:'',email:'not-an-email',contactNo:''},admin.cookie)).status,200);
+  assert.equal(edited.firstName,'');
+  assert.equal(edited.email,'not-an-email');
+  assert.equal(edited.passwordHash,originalHash);
+  assert.equal((await request(editPath,'PUT',{password:'x'},admin.cookie)).status,200);
+  assert.equal((await request('/auth/login','POST',{username:'disposable',password:'x'})).status,200);
+  assert.equal((await request('/auth/login','POST',{username:'disposable',password:'wrong'})).status,401);
+  assert.equal((await request(editPath,'PUT',{password:''},admin.cookie)).status,200);
+  assert.equal((await request('/auth/login','POST',{username:'disposable',password:''})).status,200);
+  assert.equal((await request('/auth/login','POST',{username:'disposable',password:'x'})).status,401);
+  assert.equal((await request(editPath,'PUT',{password:''},buyer.cookie)).status,403);
+  assert.equal((await request('/auth/profile','PUT',{firstName:''},buyer.cookie)).status,400);
+  assert.equal((await request('/auth/profile','PUT',{password:'x'},buyer.cookie)).status,400);
+  assert.equal((await request('/auth/signup','POST',{...profile,username:'blank_signup',role:'buyer',password:''})).status,400);
   const loggedOut = await request('/auth/logout','POST',undefined,buyer.cookie);
   assert.equal(loggedOut.status, 200);
   assert.equal(sessions.has(tokenHash(buyer.cookie.split('=')[1])), false);
