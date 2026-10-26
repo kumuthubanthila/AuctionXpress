@@ -44,7 +44,14 @@ test("auction HTTP routes, validation, filters and errors", async (t) => {
   assert.equal(created.status, 201);
   assert.equal(created.body.data.currentPrice, 50);
   assert.equal(created.body.data.status, "open");
+  assert.equal(created.body.data.currency, 'LKR');
   const path = `/api/auctions/${created.body.data._id}`;
+  const changedCurrency = await request(path, 'PUT', { currency: 'USD' });
+  assert.equal(changedCurrency.status, 200);
+  assert.equal(changedCurrency.body.data.currency, 'USD');
+  assert.equal(changedCurrency.body.data.currentPrice, 50);
+  assert.equal((await request(path, 'PUT', { currency: 'INVALID' })).status, 400);
+  assert.equal((await request('/api/auctions', 'POST', { ...fields, currency: 'INVALID' })).status, 400);
   assert.equal((await request(path)).body.data.title, "Camera");
   const list = await request("/api/auctions?search=a.%2A&category=Electronics&status=open&sort=-startingPrice,title");
   assert.equal(list.status, 200);

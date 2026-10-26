@@ -1,10 +1,22 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { auctionPayload, countdown, isOpen, localDateInput, validateAuction, validateBid } from '../src/lib/auction.js'
+import { auctionPayload, countdown, isOpen, localDateInput, validateAuction, validateBid, money, adjustBidAmount } from '../src/lib/auction.js'
 import { api, ApiError } from '../src/lib/api.js'
 
 const initial = { title: 'Camera', description: 'A test item', category: 'Electronics', imageUrl: '', startingPrice: 10, currentPrice: 20, endsAt: '2035-01-01T00:00:00.000Z' }
 const values = () => ({ ...initial, startingPrice: '10', endsAt: localDateInput(initial.endsAt) })
+
+test('per-auction currency persists without conversion and bid controls step by 10000', () => {
+  assert.match(money(123, 'USD'), /USD/)
+  assert.match(money(123, 'LKR'), /LKR/)
+  assert.equal(auctionPayload({ ...values(), currency: 'USD' }).currency, 'USD')
+  assert.equal(auctionPayload({ ...values(), currency: 'USD' }).startingPrice, 10)
+  assert.ok(validateAuction({ ...values(), currency: 'INVALID' }).currency)
+  assert.equal(adjustBidAmount('', 500, 10000), '10500')
+  assert.equal(adjustBidAmount('10500', 500, 10000), '20500')
+  assert.equal(adjustBidAmount('20500', 500, -10000), '10500')
+  assert.equal(adjustBidAmount('10500', 500, -10000), '501')
+})
 
 test('auction forms validate fields, HTTP URLs, finite prices and future dates', () => {
   assert.deepEqual(validateAuction(values()), {})

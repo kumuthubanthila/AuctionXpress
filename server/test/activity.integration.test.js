@@ -1,0 +1,74 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import mongoose from 'mongoose';
+import app from '../app.js';
+import User from '../models/User.js';
+import Session from '../models/Session.js';
+import Auction from '../models/Auction.js';
+import Bid from '../models/Bid.js';
+import Conversation from '../models/Conversation.js';
+import DirectMessage from '../models/DirectMessage.js';
+import NotificationRead from '../models/NotificationRead.js';
+import { ensureDemoAdmin } from '../controllers/authController.js';
+
+test('Atlas notifications, unread state and private buyer–seller conversations', { skip:!process.env.TEST_MONGO_URI }, async (t) => {
+  const database = `ax_act_${new mongoose.Types.ObjectId()}`;
+  t.after(async () => { try { if (mongoose.connection.readyState === 1) await mongoose.connection.dropDatabase(); } finally { await mongoose.disconnect(); } });
+  await mongoose.connect(process.env.TEST_MONGO_URI,{dbName:database,serverSelectionTimeoutMS:10000});
+  await Promise.all([User.init(),Session.init(),Auction.init(),Bid.init(),Conversation.init(),DirectMessage.init(),NotificationRead.init()]);
+  await ensureDemoAdmin();
+  const server=app.listen(0,'127.0.0.1');
+  await new Promise((resolve) => server.once('listening',resolve));
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+  async function request(path,method='GET',body,cookie) {
+    const response=await fetch(`http://127.0.0.1:${server.address().port}/api${path}`,{method,headers:{'Content-Type':'application/json',...(cookie&&{Cookie:cookie})},...(body!==undefined&&{body:JSON.stringify(body)})});
+    return {status:response.status,body:await response.json(),cookie:response.headers.get('set-cookie')?.split(';')[0]};
+  }
+  const profile={firstName:'Activity',lastName:'Test',email:'test@example.com',contactNo:'0771234567',password:'password123'};
+  const accounts={};
+  for(const [username,role] of [['buyer','buyer'],['rival','buyer'],['seller','seller'],['stranger','seller']]) {
+    accounts[username]=await request('/auth/signup','POST',{...profile,username,role});
+    assert.equal(accounts[username].status,201);
+  }
+  const admin=await request('/auth/login','POST',{username:'admin',password:'admin'});
+  const listing=await request('/auctions','POST',{title:'Conversation watch',description:'Activity test',category:'Watches',currency:'USD',startingPrice:100,endsAt:new Date(Date.now()+600000).toISOString()},accounts.seller.cookie);
+  const auctionId=listing.body.data._id;
+  assert.equal((await request(`/auctions/${auctionId}/approval`,'PATCH',{approval:'approved'},admin.cookie)).status,200);
+  const start=await request('/activity/conversations','POST',{auctionId},accounts.buyer.cookie);
+  assert.equal(start.status,200,JSON.stringify(start.body));
+  const thread=start.body.data._id;
+  assert.equal((await request('/activity/conversations','POST',{auctionId},accounts.buyer.cookie)).body.data._id,thread);
+  assert.equal(await Conversation.countDocuments(),1);
+  const path=`/activity/conversations/${thread}/messages`;
+  assert.equal((await request(path,'GET',undefined,accounts.rival.cookie)).status,404);
+  assert.equal((await request(path,'GET',undefined,accounts.stranger.cookie)).status,404);
+  assert.equal((await request('/activity/conversations','POST',{auctionId},accounts.seller.cookie)).status,403);
+  assert.equal((await request(path,'POST',{content:' '},accounts.buyer.cookie)).status,400);
+  assert.equal((await request(path,'POST',{content:'Spoof',senderId:accounts.seller.body.data._id},accounts.buyer.cookie)).status,400);
+  assert.equal((await request(path,'POST',{content:'Is the watch working?'},accounts.buyer.cookie)).status,201);
+  assert.equal((await request('/activity/conversations','GET',undefined,accounts.seller.cookie)).body.unreadCount,1);
+  assert.equal((await request(path,'GET',undefined,accounts.seller.cookie)).body.data[0].content,'Is the watch working?');
+  assert.equal((await request('/activity/conversations','GET',undefined,accounts.seller.cookie)).body.unreadCount,0);
+  assert.equal((await request(path,'POST',{content:'Yes, it is working.'},accounts.seller.cookie)).status,201);
+  assert.equal((await request('/activity/conversations','GET',undefined,accounts.buyer.cookie)).body.unreadCount,1);
+  assert.equal((await request(path,'GET',undefined,accounts.buyer.cookie)).body.data.length,2);
+  assert.equal((await request('/activity/conversations','GET',undefined,accounts.buyer.cookie)).body.unreadCount,0);
+  assert.equal((await request('/activity/conversations','GET',undefined,accounts.rival.cookie)).body.data.length,0);
+  assert.equal((await request('/activity/notifications','GET',undefined,accounts.buyer.cookie)).body.unreadCount,0);
+  for(const [username,amount] of [['buyer',150],['rival',200],['buyer',250],['buyer',300]]) assert.equal((await request(`/auctions/${auctionId}/bids`,'POST',{amount},accounts[username].cookie)).status,201);
+  const beforeClose=await request('/activity/notifications','GET',undefined,accounts.buyer.cookie);
+  assert.equal(beforeClose.body.data.filter((event) => event.type==='outbid').length,1);
+  await Auction.updateOne({_id:auctionId},{$set:{endsAt:new Date(Date.now()-1000)}});
+  const feed=await request('/activity/notifications','GET',undefined,accounts.buyer.cookie);
+  assert.equal(feed.body.data[0].type,'won');
+  assert.equal(feed.body.data[0].currency,'USD');
+  assert.equal(feed.body.unreadCount,2);
+  const rival=await request('/activity/notifications','GET',undefined,accounts.rival.cookie);
+  assert.equal(rival.body.data[0].type,'closed');
+  const ownOutbid=feed.body.data.find((event) => event.type==='outbid').id;
+  assert.equal((await request('/activity/notifications/read','POST',{ids:[ownOutbid]},accounts.rival.cookie)).status,404);
+  assert.equal((await request('/activity/notifications/read','POST',{ids:feed.body.data.map((event) => event.id)},accounts.buyer.cookie)).status,200);
+  assert.equal((await request('/activity/notifications','GET',undefined,accounts.buyer.cookie)).body.unreadCount,0);
+  assert.equal((await request('/activity/notifications','GET',undefined,accounts.rival.cookie)).body.unreadCount,2);
+  assert.equal((await request(path,'POST',{content:'Intrusion'},accounts.rival.cookie)).status,404);
+});

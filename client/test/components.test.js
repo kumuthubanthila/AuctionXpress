@@ -48,6 +48,12 @@ test('reusable components and routed pages render without runtime errors', async
     }
     assert.doesNotMatch(withUser(Protected, buyer, { roles: ['admin'], children: h('div', null, 'secret admin tools') }), /secret admin tools/)
     assert.match(withUser(BidForm, buyer, { auction, open: true }), /value="buyer1"/)
+    const bidding = withUser(BidForm, buyer, { auction: { ...auction, currency: 'USD' }, open: true })
+    assert.match(bidding, /placeholder="20"/)
+    assert.match(bidding, /10,000/)
+    assert.match(bidding.replaceAll('<!-- -->', ''), /Your bid \(USD\)/)
+    assert.match(render(Form, { onSaved() {} }), /id="currency"/)
+    assert.match(render(Form, { onSaved() {} }).replaceAll('<!-- -->', ''), /USD — US dollar/)
     assert.match(withUser(BidForm, { ...buyer, role: 'seller' }, { auction, open: true }), /buyer accounts/)
     const { AccountDeleteButton } = await vite.ssrLoadModule('/src/components/AdminUsers.jsx')
     const currentAdmin = { _id: 'current-admin', username: 'other_admin' }
@@ -60,5 +66,13 @@ test('reusable components and routed pages render without runtime errors', async
     assert.match(confirmation, /permanently deleted/)
     assert.match(confirmation, /Keep account/)
     assert.match(confirmation, /Delete account/)
+    const { default: ActivityPanels } = await vite.ssrLoadModule('/src/components/ActivityPanels.jsx')
+    const activity = withUser(ActivityPanels, buyer)
+    assert.match(activity, /aria-label="Notifications"/)
+    assert.match(activity, /aria-label="Messages"/)
+    const { default: MessagesPage } = await vite.ssrLoadModule('/src/pages/Messages.jsx')
+    assert.match(withUser(MessagesPage, buyer), /Your messages/)
+    const { default: Checkout } = await vite.ssrLoadModule('/src/pages/Checkout.jsx')
+    assert.doesNotMatch(withUser(Checkout, buyer), /demo/i)
   } finally { await vite.close() }
 })

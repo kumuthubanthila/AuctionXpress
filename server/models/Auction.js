@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { currencies } from '../lib/currencies.js';
 
 const price = {
   type: Number,
@@ -23,6 +24,7 @@ const auctionSchema = new mongoose.Schema({
     }
   },
   startingPrice: { ...price },
+  currency: { type: String, enum: currencies, default: 'LKR', required: true },
   currentPrice: { ...price },
   sellerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   sellerName: { type: String, default: 'Legacy listing' },

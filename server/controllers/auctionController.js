@@ -4,8 +4,9 @@ import Bid from "../models/Bid.js";
 import { HttpError } from "../middleware/errorHandler.js";
 import Payment from '../models/Payment.js';
 import { canManage, canView } from '../middleware/auth.js';
+import { currencies } from '../lib/currencies.js';
 
-const editable = ["title", "description", "category", "imageUrl", "startingPrice", "startsAt", "endsAt"];
+const editable = ["title", "description", "category", "imageUrl", "startingPrice", "currency", "startsAt", "endsAt"];
 const sortFields = ["title", "category", "startingPrice", "currentPrice", "endsAt", "createdAt", "updatedAt"];
 
 function validateBody(body, creating = false) {
@@ -13,6 +14,7 @@ function validateBody(body, creating = false) {
     throw new HttpError(400, "Request body must be a JSON object");
   }
   const keys = Object.keys(body);
+  if ('currency' in body && !currencies.includes(body.currency)) throw new HttpError(400, `Choose a supported currency: ${currencies.join(', ')}`);
   const unknown = keys.filter((key) => !editable.includes(key));
   if (unknown.length) throw new HttpError(400, `Fields cannot be modified: ${unknown.join(", ")}`);
   if (!keys.length) throw new HttpError(400, "Provide at least one auction field");
@@ -106,6 +108,7 @@ export async function updateAuction(req, res) {
     if (!canManage(req.user, document)) throw new HttpError(403, 'You can only edit your own auctions');
     if (await Payment.exists({ auctionId: document._id }).session(session)) throw new HttpError(409, 'Settled auctions cannot be edited');
     const hasBids = await Bid.exists({ auctionId: document._id }).session(session);
+    if (hasBids && 'currency' in fields && fields.currency !== (document.currency || 'LKR')) throw new HttpError(409, 'Currency cannot change after bids exist');
     if (hasBids && 'startsAt' in fields && Date.parse(fields.startsAt) !== document.startsAt?.getTime()) throw new HttpError(409, 'Start time cannot change after bids exist');
     if ("startingPrice" in fields && fields.startingPrice !== document.startingPrice) {
       if (hasBids) {

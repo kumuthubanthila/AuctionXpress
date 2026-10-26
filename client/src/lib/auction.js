@@ -1,6 +1,12 @@
 export const suggestedCategories = ['Jewelries', 'Watches', 'Handbags', 'Arts', 'Wines', 'Electronics', 'Art & Collectibles', 'Fashion', 'Home & Living', 'Sports', 'Vehicles', 'Other']
 export const currency = import.meta.env?.VITE_CURRENCY || 'LKR'
-export const money = (amount) => new Intl.NumberFormat('en-LK', { style: 'currency', currency, maximumFractionDigits: 8 }).format(amount)
+export const currencies = [['LKR','Sri Lankan rupee'],['USD','US dollar'],['EUR','Euro'],['GBP','British pound'],['INR','Indian rupee'],['AUD','Australian dollar'],['CAD','Canadian dollar'],['JPY','Japanese yen'],['AED','UAE dirham']]
+export const money = (amount, code = currency) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: code || currency, currencyDisplay: 'code', maximumFractionDigits: 8 }).format(amount)
+export function adjustBidAmount(amount, currentPrice, change) {
+  const entered = Number(amount)
+  const base = amount === '' || !Number.isFinite(entered) ? currentPrice : Math.max(currentPrice, entered)
+  return String(Math.max(currentPrice + 1, base + change))
+}
 export const dateTime = (date) => new Date(date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 export const isOpen = (auction, now = Date.now()) => new Date(auction.endsAt).getTime() > now && (!auction.startsAt || new Date(auction.startsAt).getTime() <= now) && (!auction.approval || auction.approval === 'approved')
 export const isUpcoming = (auction, now = Date.now()) => new Date(auction.endsAt).getTime() > now && auction.startsAt && new Date(auction.startsAt).getTime() > now
@@ -21,6 +27,7 @@ export function localDateInput(date) {
 
 export function validateAuction(values, initial) {
   const errors = {}
+  if (values.currency && !currencies.some(([code]) => code === values.currency)) errors.currency = 'Choose a supported currency.'
   for (const [field, max] of [['title', 200], ['description', 10000], ['category', 100]]) {
     if (!values[field].trim()) errors[field] = `${field[0].toUpperCase() + field.slice(1)} is required.`
     else if (values[field].length > max) errors[field] = `Use at most ${max} characters.`
@@ -38,15 +45,17 @@ export function validateAuction(values, initial) {
 
 export function auctionPayload(values, initial) {
   const payload = { title: values.title.trim(), description: values.description.trim(), category: values.category.trim(), imageUrl: values.imageUrl.trim(), startingPrice: Number(values.startingPrice) }
+  payload.currency = values.currency || initial?.currency || currency
+  if (initial && payload.currency === (initial.currency || currency)) delete payload.currency
   if (!initial || values.endsAt !== localDateInput(initial.endsAt)) payload.endsAt = new Date(values.endsAt).toISOString()
   if (values.startsAt && (!initial?.startsAt || values.startsAt !== localDateInput(initial.startsAt))) payload.startsAt = new Date(values.startsAt).toISOString()
   if (initial && payload.startingPrice === initial.startingPrice) delete payload.startingPrice
   return payload
 }
 
-export function validateBid(name, amount, currentPrice) {
+export function validateBid(name, amount, currentPrice, code = currency) {
   const errors = {}
   if (!name.trim() || name.trim().length > 100) errors.bidderName = 'Enter your name (1–100 characters).'
-  if (amount === '' || !Number.isFinite(Number(amount)) || Number(amount) <= 0 || Number(amount) <= currentPrice) errors.amount = `Enter an amount greater than ${money(currentPrice)}.`
+  if (amount === '' || !Number.isFinite(Number(amount)) || Number(amount) <= 0 || Number(amount) <= currentPrice) errors.amount = `Enter an amount greater than ${money(currentPrice, code)}.`
   return errors
 }

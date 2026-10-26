@@ -4,6 +4,7 @@ import auctionRoutes from "./routes/auctionRoutes.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import authRoutes from './routes/authRoutes.js';
 import communityRoutes from './routes/communityRoutes.js';
+import activityRoutes from './routes/activityRoutes.js';
 import { optionalAuth, checkOrigin } from './middleware/auth.js';
 import { fileURLToPath } from 'node:url';
 
@@ -21,6 +22,7 @@ app.get("/api/health", (req, res) => {
 app.use('/api', optionalAuth);
 app.use('/api/auth', authRoutes);
 app.use('/api', communityRoutes);
+app.use('/api/activity', activityRoutes);
 app.use("/api/auctions", auctionRoutes);
 app.use(notFound);
 app.use(errorHandler);

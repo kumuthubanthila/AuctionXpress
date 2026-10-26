@@ -63,6 +63,7 @@ The ZIP's card and bank forms only displayed success alerts. The MERN version ex
 - Legacy auctions remain visible as approved and unowned. Only admins can edit/remove them; no automatic reassignment or destructive migration is performed.
 - Seller edits before bidding return a listing to the approval queue. Once bids exist, the starting price/start time cannot change, deletion is rejected, and approval cannot be revoked. Existing end-date and price validation and transactional bidding are preserved.
 - A demo-settled auction cannot be edited/reopened. Result/checkout derive the winner from accepted bid records, not client claims.
+- Auction forms offer LKR, USD, EUR, GBP, INR, AUD, CAD, JPY and AED. The chosen currency is stored with the auction, displayed for all prices/bids, and copied to demo receipts. Existing auctions default to LKR. Currency is locked once bids exist; amounts are never converted. Bid inputs show the current price as their placeholder and the adjustment buttons change the entered amount by 10,000 (the lower control stops above the current price).
 - Deleted accounts are removed from the user collection and cannot log in. All their sessions are revoked in the same transaction. Auction, bid, message and demo-payment records retain their original account IDs and stored names as history; deleting an account does not delete these records. Auctions of deleted sellers remain manageable by admins. Previously deactivated accounts can also be permanently deleted. The deleted username becomes available for a new account with a new ID.
 - Uploaded files live in ignored `server/uploads/` and are served by Express. Keep that directory if you want photos to survive a server move; MongoDB stores their URLs. A future hosted setup needs persistent upload storage and a suitable `PUBLIC_API_URL`.
 
@@ -120,6 +121,29 @@ npm.cmd test
 Offline tests mock database operations and test hashing, login cookies, role boundaries, protected profiles, approval visibility, signup validation, contact inbox, existing CRUD/bids and component rendering. For real database tests set `TEST_MONGO_URI` explicitly to an Atlas/replica-set account, then run server tests. They create unique `ax_test_<ObjectId>` and `ax_auth_<ObjectId>` databases and drop only those generated databases on completion; no `.env` or application database is used by tests automatically.
 
 ## File guide for this update
+
+### Notification and messaging panes
+
+Buyer/seller navigation includes **Notifications** and **Messages** buttons with unread counts. Notifications refresh every 15 seconds and show outbid alerts, auction closure, and a winning result. They are derived from committed bids and server time, including bids placed before the feature was installed; no scheduler needs to run while the app is offline. The latest 100 events are shown, with persistent per-user read receipts. Raising your own leading bid does not produce an outbid alert. Opening a notification links to its auction; **Mark all as read** updates only your own events.
+
+On approved auction details, a buyer can choose **Message seller** to open `/messages?auction=<id>`. A conversation is tied to that auction, buyer and actual seller; repeated starts reuse it. Only those two accounts can read or send messages. Sellers reply in their Messages pane. The full inbox is also available at `/messages`. Message bodies are plain text (1–2000 characters). The conversation list refreshes every 10 seconds; an open thread refreshes every 5 seconds and marks returned messages read. The inbox shows the latest 100 conversations and each thread's latest 200 messages. Removed accounts cannot receive new messages; existing conversation history remains. Admin contact messages remain a separate inbox.
+
+The payment portal now uses **Checkout**, **Payment reference**, and **Record payment reference** rather than “demo” labels. Its behavior is unchanged: it records references only and does not transfer money or collect card/bank account details. Historical internal payment statuses are retained for compatibility.
+
+New endpoints (all require a session):
+
+| Method/path | Behavior |
+| --- | --- |
+| `GET /api/activity/notifications` | Own notification events and unread count |
+| `POST /api/activity/notifications/read` | `{ids:[...]}` marks up to 100 own notifications read |
+| `GET /api/activity/conversations` | Buyer/seller participant-only inbox and unread counts |
+| `POST /api/activity/conversations` | Buyer starts/reuses a thread with `{auctionId}` |
+| `GET /api/activity/conversations/:id/messages` | Participant-only history, marks returned messages read |
+| `POST /api/activity/conversations/:id/messages` | Participant sends `{content}`; sender comes from the session |
+
+New files: backend `NotificationRead.js`, `Conversation.js`, `DirectMessage.js` models, `lib/notificationEvents.js`, `controllers/activityController.js`, `routes/activityRoutes.js`; frontend `ActivityPanels.jsx`, `MessagingPane.jsx`, `pages/Messages.jsx`, `Activity.css`. Tests in `activity.test.js` and `activity.integration.test.js` verify event types, self-raises, read isolation, private conversations, sender spoofing, replies and unread counts. The Atlas test uses its own `ax_act_<ObjectId>` database and removes it after completion.
+
+To check manually, use separate browser profiles for two buyers and a seller. Place a leading bid as buyer A and a higher bid as buyer B: A gets an outbid notification within 15 seconds. Let the auction close: the highest bidder gets a win and other bidders get a closure notification. Mark events read and refresh to check persistence. Use Message seller, send a question, reply as seller, and check unread counts clear when opening the thread. A third account must not be able to read the conversation through its URL/API. Restart the backend after updating so the new API routes are available.
 
 - Backend models: `User.js`, `Session.js`, `Message.js`, `Payment.js`; Auction adds ownership/approval/start time, Bid adds account identity.
 - `server/lib/passwords.js`: native async scrypt hashing, verification and token digests.

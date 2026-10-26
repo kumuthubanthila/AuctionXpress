@@ -18,7 +18,7 @@ export async function sellers(req, res) {
   res.json({ success: true, data: users });
 }
 export async function myBids(req, res) {
-  const bids = await Bid.find({ bidderId: req.user._id }).populate('auctionId', 'title currentPrice endsAt').sort({ createdAt: -1 });
+  const bids = await Bid.find({ bidderId: req.user._id }).populate('auctionId', 'title currentPrice currency endsAt').sort({ createdAt: -1 });
   res.json({ success: true, data: bids });
 }
 export async function users(req, res) {
@@ -92,21 +92,21 @@ export async function auctionResult(req, res) {
   const ended = auction.endsAt.getTime() <= Date.now();
   const won = Boolean(ended && winner?.bidderId && String(winner.bidderId) === String(req.user?._id));
   const payment = won ? await Payment.findOne({ auctionId: auction._id, buyerId: req.user._id }) : null;
-  res.json({ success: true, data: { ended, winner: ended && winner ? { bidderName: winner.bidderName, amount: winner.amount } : null, won, payment } });
+  res.json({ success: true, data: { currency: auction.currency || 'LKR', ended, winner: ended && winner ? { bidderName: winner.bidderName, amount: winner.amount } : null, won, payment } });
 }
 export async function demoPayment(req, res) {
   objectId(req.params.id);
   if (!req.body || Object.keys(req.body).some((key) => !['method', 'reference'].includes(key)) || !['card', 'bank'].includes(req.body.method)) throw new HttpError(400, 'Choose card or bank. Do not submit card or bank account details.');
-  if (typeof req.body.reference !== 'string' || !req.body.reference.trim() || req.body.reference.length > 100) throw new HttpError(400, 'Provide a demo reference (maximum 100 characters)');
+  if (typeof req.body.reference !== 'string' || !req.body.reference.trim() || req.body.reference.length > 100) throw new HttpError(400, 'Provide a payment reference (maximum 100 characters)');
   const payment = await mongoose.connection.transaction(async (session) => {
     // A document write serializes settlement against auction edits/extension.
     const auction = await Auction.findOneAndUpdate({ _id: req.params.id, endsAt: { $lte: new Date() } }, { $inc: { settlementVersion: 1 } }, { session, returnDocument: 'after' });
-    if (!auction) throw new HttpError(409, 'Auction must have ended before demo checkout');
+    if (!auction) throw new HttpError(409, 'Auction must have ended before checkout');
     const winner = await Bid.findOne({ auctionId: auction._id }, null, { session }).sort({ amount: -1 });
-    if (!winner?.bidderId || String(winner.bidderId) !== String(req.user._id)) throw new HttpError(403, 'Only the winning buyer can complete demo checkout');
-    if (await Payment.exists({ auctionId: auction._id }).session(session)) throw new HttpError(409, 'Demo payment already recorded');
-    const [record] = await Payment.create([{ auctionId: auction._id, buyerId: req.user._id, amount: winner.amount, method: req.body.method, reference: req.body.reference.trim() }], { session });
+    if (!winner?.bidderId || String(winner.bidderId) !== String(req.user._id)) throw new HttpError(403, 'Only the winning buyer can record a payment reference');
+    if (await Payment.exists({ auctionId: auction._id }).session(session)) throw new HttpError(409, 'Payment reference already recorded');
+    const [record] = await Payment.create([{ auctionId: auction._id, buyerId: req.user._id, amount: winner.amount, currency: auction.currency || 'LKR', method: req.body.method, reference: req.body.reference.trim() }], { session });
     return record;
   });
-  res.status(201).json({ success: true, data: payment, message: 'Demo checkout recorded. No money was transferred.' });
+  res.status(201).json({ success: true, data: payment, message: 'Payment reference recorded. No money was transferred.' });
 }

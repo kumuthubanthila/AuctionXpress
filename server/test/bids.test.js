@@ -62,6 +62,7 @@ test("bid HTTP validation, duplicate/expired conflicts, history and CRUD guards"
   assert.equal((await request(`/${id}/bids`)).body.count, 1);
   assert.equal((await request(`/${id}`, "DELETE")).status, 409);
   assert.equal((await request(`/${id}`, "PUT", { startingPrice: 15 })).status, 409);
+  assert.equal((await request(`/${id}`, 'PUT', { currency: 'USD' })).status, 409);
   auction.endsAt = new Date(Date.now() - 1000);
   const expired = await request(`/${id}/bids`, "POST", { bidderName: "Lee", amount: 40 });
   assert.equal(expired.status, 409);

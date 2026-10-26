@@ -7,6 +7,7 @@ import AuctionEditor from './pages/AuctionEditor'
 import Dashboard from './pages/Dashboard'
 import { EmptyState } from './components/Feedback'
 import './App.css'
+import './Activity.css'
 import { AuthProvider, Protected } from './context/AuthContext'
 import Auth from './pages/Auth'
 import Profile from './pages/Profile'
@@ -15,6 +16,7 @@ import Sellers from './pages/Sellers'
 import Contact from './pages/Contact'
 import About from './pages/About'
 import Checkout from './pages/Checkout'
+import Messages from './pages/Messages'
 
 export default function App() {
   return <BrowserRouter><AuthProvider><Routes><Route element={<Layout />}>
@@ -27,6 +29,7 @@ export default function App() {
     <Route path="signup" element={<Auth key="signup" signup />} />
     <Route path="login" element={<Auth key="login" />} />
     <Route path="profile" element={<Protected><Profile /></Protected>} />
+    <Route path="messages" element={<Protected roles={['buyer', 'seller']}><Messages /></Protected>} />
     <Route path="admin" element={<Protected roles={['admin']}><Admin /></Protected>} />
     <Route path="sellers" element={<Protected><Sellers /></Protected>} />
     <Route path="contact" element={<Protected><Contact /></Protected>} />

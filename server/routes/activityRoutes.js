@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import { requireAuth, roles } from '../middleware/auth.js';
+import { notifications, readNotifications, startConversation, conversations, conversationMessages, sendDirectMessage } from '../controllers/activityController.js';
+const router = Router();
+router.use(requireAuth);
+router.get('/notifications', notifications);
+router.post('/notifications/read', readNotifications);
+router.get('/conversations', roles('buyer', 'seller'), conversations);
+router.post('/conversations', roles('buyer'), startConversation);
+router.get('/conversations/:id/messages', roles('buyer', 'seller'), conversationMessages);
+router.post('/conversations/:id/messages', roles('buyer', 'seller'), sendDirectMessage);
+export default router;

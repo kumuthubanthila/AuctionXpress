@@ -31,7 +31,6 @@ export default function Footer() {
     </div>
     <div className="container footer-bottom">
       <p>AuctionXpress <span aria-hidden="true">·</span> Great finds. New stories.</p>
-      <p>EE4207 mini project <span aria-hidden="true">·</span> Demo marketplace. No real payments.</p>
     </div>
   </footer>
 }
