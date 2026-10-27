@@ -1185,8 +1185,11 @@ td>time {
   color:#8d775c
 }
 .countdown.ended {
-  background:#f2ede7;
-  border-color:#e1d7cc
+  background:#fde8e7;
+  border-color:#f3b8b5
+}
+.countdown.ended>span,.countdown.ended strong,.countdown.ended small {
+  color:#b42318
 }
 .bid-form h2 {
   font-size:1.3rem
