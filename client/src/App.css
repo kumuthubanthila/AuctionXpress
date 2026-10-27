@@ -444,12 +444,20 @@
   font-size:8px
 }
 .badge.open {
-  background:#edf0e5;
-  color:#4d603b
+  background:#e5f4e9;
+  color:#19733b
 }
 .badge.closed {
-  background:#eee9e2;
-  color:#756b62
+  background:#fde8e7;
+  color:#b42318
+}
+.badge.upcoming {
+  background:#e8efff;
+  color:#3159a7
+}
+.badge.pending {
+  background:#fff3d8;
+  color:#8b5c00
 }
 .card-arrow {
   position:absolute;
