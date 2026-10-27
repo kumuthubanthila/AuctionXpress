@@ -25,8 +25,13 @@ export function userFields(body, { creating = false, admin = false } = {}) {
     if (!/^[a-z0-9_]{3,30}$/.test(fields.username || '')) throw new HttpError(400, 'Username must contain 3–30 letters, numbers or underscores');
     if (!(admin ? ['buyer', 'seller', 'admin'] : ['buyer', 'seller']).includes(fields.role)) throw new HttpError(400, 'Choose buyer or seller');
     if (fields.username === 'admin') throw new HttpError(409, 'This username is reserved');
-    if (fields.role === 'admin' && admin) {
-      fields.firstName ||= 'Admin'; fields.lastName ||= 'Account'; fields.email ||= `${fields.username}@auctionxpress.local`; fields.contactNo ||= '0000000000';
+    if (admin) {
+      // Admin-created accounts may omit profile details; preserve a valid
+      // account record while allowing those details to be completed later.
+      fields.firstName ||= fields.username;
+      fields.lastName ||= 'User';
+      fields.email ||= `${fields.username}@auctionxpress.local`;
+      fields.contactNo ||= '0000000000';
     }
   }
   for (const key of ['firstName', 'lastName', 'email', 'contactNo']) {
@@ -34,7 +39,8 @@ export function userFields(body, { creating = false, admin = false } = {}) {
   }
   if ('email' in fields && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)) throw new HttpError(400, 'Enter a valid email address');
   if ('contactNo' in fields && !/^[+()\d\s.-]{7,30}$/.test(fields.contactNo)) throw new HttpError(400, 'Enter a valid contact number (7–30 characters)');
-  if ((creating || 'password' in fields) && (typeof fields.password !== 'string' || fields.password.length < 8 || fields.password.length > 128)) throw new HttpError(400, 'Password must contain 8–128 characters');
+  const minimumPasswordLength = admin && creating ? 0 : 8;
+  if ((creating || 'password' in fields) && (typeof fields.password !== 'string' || fields.password.length < minimumPasswordLength || fields.password.length > 128)) throw new HttpError(400, `Password must contain ${minimumPasswordLength}–128 characters`);
   return fields;
 }
 export async function createUser(body, admin = false) {

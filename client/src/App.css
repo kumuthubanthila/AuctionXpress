@@ -1158,6 +1158,11 @@ td>time {
   color:#7b6b5c;
   font-weight:500
 }
+.item-panel-edit {
+  width:100%;
+  justify-content:center;
+  margin:16px 0 0
+}
 .countdown {
   display:flex;
   flex-direction:column;
