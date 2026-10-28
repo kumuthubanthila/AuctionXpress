@@ -22,6 +22,7 @@ export default function AccountMenu({ user, pending, onLogout }) {
     <div className="account-menu-panel">
       <div className="account-menu-identity"><strong>{user.username}</strong><small>{user.role} account</small></div>
       <Link to={user.role === 'admin' ? '/admin' : '/dashboard'}>{user.role === 'admin' ? 'Admin panel' : user.role === 'seller' ? 'My listings' : 'My bids'}</Link>
+      {user.role === 'seller' && <Link to="/auctions/new">List an item</Link>}
       <Link to="/profile">Profile settings</Link>
       {user.role === 'admin' && <Link to="/auctions/new">Create auction</Link>}
       <button type="button" disabled={pending} onClick={onLogout}>{pending ? 'Logging out…' : 'Log out'}</button>

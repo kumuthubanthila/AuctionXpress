@@ -175,9 +175,14 @@
   background:#ad3232
 }
 .button.danger-ghost {
-  background:#fff6f4;
-  border-color:#f0dbd7;
-  color:#a13434
+  background:#ef2929;
+  border-color:#ef2929;
+  color:#fff
+}
+.button.danger-ghost:hover {
+  background:#c91d1d;
+  border-color:#c91d1d;
+  color:#fff
 }
 .button.full {
   width:100%
@@ -1035,6 +1040,22 @@ td>time {
   display:flex;
   gap:8px
 }
+.listing-tile {
+  color:inherit
+}
+.listing-tile:hover strong {
+  color:var(--accent)
+}
+.listing-row {
+  cursor:pointer
+}
+.listing-row:hover td {
+  background:#f7f2ea
+}
+.listing-row:focus-visible td {
+  outline:2px solid var(--accent);
+  outline-offset:-2px
+}
 .confirm-dialog {
   border:1px solid var(--line);
   padding:30px;
@@ -1129,9 +1150,7 @@ td>time {
   font-weight:500
 }
 .bidding-panel {
-  padding:28px;
-  position:sticky;
-  top:calc(var(--top-pane-height, 130px) + 22px)
+  padding:28px
 }
 .price-heading {
   display:flex;
@@ -1158,10 +1177,14 @@ td>time {
   color:#7b6b5c;
   font-weight:500
 }
-.item-panel-edit {
-  width:100%;
-  justify-content:center;
+.item-panel-actions {
+  display:flex;
+  gap:8px;
   margin:16px 0 0
+}
+.item-panel-actions .button {
+  flex:1;
+  justify-content:center
 }
 .countdown {
   display:flex;
@@ -1195,6 +1218,27 @@ td>time {
 }
 .countdown.ended>span,.countdown.ended strong,.countdown.ended small {
   color:#b42318
+}
+.countdown.open {
+  background:#e5f4e9;
+  border-color:#a8dfb7
+}
+.countdown.open>span,.countdown.open strong,.countdown.open small {
+  color:#19733b
+}
+.countdown.upcoming {
+  background:#e8efff;
+  border-color:#bdd0fb
+}
+.countdown.upcoming>span,.countdown.upcoming strong,.countdown.upcoming small {
+  color:#3159a7
+}
+.countdown.pending {
+  background:#fff3d8;
+  border-color:#f3d28f
+}
+.countdown.pending>span,.countdown.pending strong,.countdown.pending small {
+  color:#8b5c00
 }
 .bid-form h2 {
   font-size:1.3rem
