@@ -1,165 +1,165 @@
 :root {
-  font-family:Inter,'Segoe UI',Arial,sans-serif;
-  color:#322d29;
-  background:#faf8f5;
-  font-synthesis:none;
-  text-rendering:optimizeLegibility;
-  -webkit-font-smoothing:antialiased;
-  font-weight:400;
-  font-size:15px;
-  line-height:1.6;
-  color-scheme:light;
-  --ink:#322d29;
-  --muted:#756b62;
-  --accent:#90553c;
-  --accent-soft:#f3e9da;
-  --line:#dfd5c9;
-  --paper:#fff
+	font-family:Inter,'Segoe UI',Arial,sans-serif;
+	color:#322d29;
+	background:#faf8f5;
+	font-synthesis:none;
+	text-rendering:optimizeLegibility;
+	-webkit-font-smoothing:antialiased;
+	font-weight:400;
+	font-size:15px;
+	line-height:1.6;
+	color-scheme:light;
+	--ink:#322d29;
+	--muted:#756b62;
+	--accent:#90553c;
+	--accent-soft:#f3e9da;
+	--line:#dfd5c9;
+	--paper:#fff
 }
 html {
-  scroll-padding-top:calc(var(--top-pane-height, 130px) + 18px);
+	scroll-padding-top:calc(var(--top-pane-height, 130px) + 18px);
 }
 * {
-  box-sizing:border-box
+	box-sizing:border-box
 }
 body {
-  margin:0
+	margin:0
 }
 button,input,select,textarea {
-  font:inherit
+	font:inherit
 }
 button,a,input,select,textarea {
-  -webkit-tap-highlight-color:transparent
+	-webkit-tap-highlight-color:transparent
 }
 button,a {
-  touch-action:manipulation
+	touch-action:manipulation
 }
 button {
-  cursor:pointer
+	cursor:pointer
 }
 button:disabled,fieldset:disabled {
-  cursor:wait
+	cursor:wait
 }
 button:disabled {
-  opacity:.6
+	opacity:.6
 }
 a {
-  color:inherit;
-  text-decoration:none
+	color:inherit;
+	text-decoration:none
 }
 a:hover {
-  color:var(--accent)
+	color:var(--accent)
 }
 img {
-  display:block;
-  max-width:100%
+	display:block;
+	max-width:100%
 }
 h1,h2,h3,p {
-  margin:0
+	margin:0
 }
 h1,h2,h3 {
-  line-height:1.2;
-  color:var(--ink);
-  overflow-wrap:anywhere
+	line-height:1.2;
+	color:var(--ink);
+	overflow-wrap:anywhere
 }
 h1 {
-  font-size:clamp(2.2rem,4.4vw,3.7rem);
-  letter-spacing:-.05em;
-  font-weight:650
+	font-size:clamp(2.2rem,4.4vw,3.7rem);
+	letter-spacing:-.05em;
+	font-weight:650
 }
 h2 {
-  font-size:clamp(1.5rem,2.6vw,2rem);
-  letter-spacing:-.035em
+	font-size:clamp(1.5rem,2.6vw,2rem);
+	letter-spacing:-.035em
 }
 h3 {
-  font-size:1.15rem;
-  font-weight:650
+	font-size:1.15rem;
+	font-weight:650
 }
 p {
-  color:var(--muted)
+	color:var(--muted)
 }
 button {
-  border:0
+	border:0
 }
 fieldset {
-  border:0;
-  padding:0;
-  margin:0;
-  min-width:0
+	border:0;
+	padding:0;
+	margin:0;
+	min-width:0
 }
 label {
-  font-size:.87rem;
-  font-weight:600;
-  display:block;
-  color:var(--ink)
+	font-size:.87rem;
+	font-weight:600;
+	display:block;
+	color:var(--ink)
 }
 input,textarea,select {
-  width:100%;
-  border:1px solid #d6c9b9;
-  border-radius:7px;
-  background:white;
-  color:var(--ink);
-  padding:12px 14px;
-  outline:none;
-  min-width:0
+	width:100%;
+	border:1px solid #d6c9b9;
+	border-radius:7px;
+	background:white;
+	color:var(--ink);
+	padding:12px 14px;
+	outline:none;
+	min-width:0
 }
 input:focus,textarea:focus,select:focus {
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px #90553c22
+	border-color:var(--accent);
+	box-shadow:0 0 0 3px #90553c22
 }
 input[aria-invalid=true],textarea[aria-invalid=true] {
-  border-color:#b93e3e
+	border-color:#b93e3e
 }
 input:disabled {
-  background:#f1ece5;
-  color:#7c7065
+	background:#f1ece5;
+	color:#7c7065
 }
 textarea {
-  resize:vertical
+	resize:vertical
 }
 ::placeholder {
-  color:#8b7f73
+	color:#8b7f73
 }
 time {
-  font-variant-numeric:tabular-nums
+	font-variant-numeric:tabular-nums
 }
 a:focus-visible,button:focus-visible {
-  outline:3px solid #90553c;
-  outline-offset:4px;
-  border-radius:4px
+	outline:3px solid #90553c;
+	outline-offset:4px;
+	border-radius:4px
 }
 main:focus {
-  outline:none
+	outline:none
 }
 ::selection {
-  background:#f0daae
+	background:#f0daae
 }
 .sr-only {
-  position:absolute;
-  width:1px;
-  height:1px;
-  padding:0;
-  margin:-1px;
-  overflow:hidden;
-  clip:rect(0,0,0,0);
-  white-space:nowrap;
-  border:0
+	position:absolute;
+	width:1px;
+	height:1px;
+	padding:0;
+	margin:-1px;
+	overflow:hidden;
+	clip:rect(0,0,0,0);
+	white-space:nowrap;
+	border:0
 }
 .skip-link {
-  position:fixed;
-  top:-70px;
-  left:20px;
-  z-index:99;
-  background:white;
-  padding:12px
+	position:fixed;
+	top:-70px;
+	left:20px;
+	z-index:99;
+	background:white;
+	padding:12px
 }
 .skip-link:focus {
-  top:12px
+	top:12px
 }
 @media(prefers-reduced-motion:reduce) {
-  *,*::before,*::after {
-    animation:none!important;
-    transition:none!important;
-    scroll-behavior:auto!important
-  }
+	*,*::before,*::after {
+		animation:none!important;
+		transition:none!important;
+		scroll-behavior:auto!important
+	}
 }

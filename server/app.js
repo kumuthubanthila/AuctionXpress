@@ -14,10 +14,10 @@ app.use(express.json({ limit: '8mb' }));
 app.use(checkOrigin);
 app.use('/uploads', express.static(fileURLToPath(new URL('./uploads/', import.meta.url)), { dotfiles: 'deny', setHeaders(res) { res.set('X-Content-Type-Options', 'nosniff'); } }));
 app.get("/", (req, res) => {
-  res.send("AuctionXpress Backend is Running!");
+	res.send("AuctionXpress Backend is Running!");
 });
 app.get("/api/health", (req, res) => {
-  res.json({ success: true, message: "AuctionXpress API is working!" });
+	res.json({ success: true, message: "AuctionXpress API is working!" });
 });
 app.use('/api', optionalAuth);
 app.use('/api/auth', authRoutes);

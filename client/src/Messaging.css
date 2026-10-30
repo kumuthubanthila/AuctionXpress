@@ -72,21 +72,21 @@
 .wa-new-messages { position:absolute;bottom:105px;right:22px;padding:7px 12px;border-radius:20px;background:#fffdf9;color:var(--accent);font-size:11px;box-shadow:0 3px 10px #322d2920; }
 @media(min-width:701px) and (max-width:850px) { .wa-workspace { grid-template-columns:250px minmax(0,1fr); } }
 @media(max-width:700px) {
-  .messages-drawer { width:100%;height:100dvh;max-height:100dvh;margin:0;inset:0;border:0;border-radius:0; }
-  .messages-drawer .drawer-heading { padding:10px 15px; }
-  .messages-drawer .drawer-heading h2 { font-size:19px; }
-  .drawer-actions { gap:14px; }
-  .wa-workspace { grid-template-columns:1fr; }
-  .wa-chat { display:none; }
-  .wa-workspace.chat-selected .wa-sidebar { display:none; }
-  .wa-workspace.chat-selected .wa-chat { display:flex; }
-  .wa-back { display:grid; }
-  .wa-chat-header { padding:10px 12px;gap:9px;height:64px; }
-  .wa-chat-header>.wa-avatar { width:34px;height:34px;font-size:14px; }
-  .wa-chat-header h3 { font-size:14px; }
-  .wa-item-link { font-size:10px; }
-  .wa-message-list { padding:16px; }
-  .wa-bubble { max-width:88%; }
-  .wa-compose { padding:10px 12px 7px;gap:6px 9px; }
-  .full-messaging-panel { height:72dvh;min-height:450px; }
+	.messages-drawer { width:100%;height:100dvh;max-height:100dvh;margin:0;inset:0;border:0;border-radius:0; }
+	.messages-drawer .drawer-heading { padding:10px 15px; }
+	.messages-drawer .drawer-heading h2 { font-size:19px; }
+	.drawer-actions { gap:14px; }
+	.wa-workspace { grid-template-columns:1fr; }
+	.wa-chat { display:none; }
+	.wa-workspace.chat-selected .wa-sidebar { display:none; }
+	.wa-workspace.chat-selected .wa-chat { display:flex; }
+	.wa-back { display:grid; }
+	.wa-chat-header { padding:10px 12px;gap:9px;height:64px; }
+	.wa-chat-header>.wa-avatar { width:34px;height:34px;font-size:14px; }
+	.wa-chat-header h3 { font-size:14px; }
+	.wa-item-link { font-size:10px; }
+	.wa-message-list { padding:16px; }
+	.wa-bubble { max-width:88%; }
+	.wa-compose { padding:10px 12px 7px;gap:6px 9px; }
+	.full-messaging-panel { height:72dvh;min-height:450px; }
 }

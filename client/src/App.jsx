@@ -20,22 +20,22 @@ import Checkout from './pages/Checkout'
 import Messages from './pages/Messages'
 
 export default function App() {
-  return <BrowserRouter><AuthProvider><Routes><Route element={<Layout />}>
-    <Route index element={<Home />} />
-    <Route path="auctions" element={<Browse />} />
-    <Route path="auctions/new" element={<Protected roles={['seller','admin']}><AuctionEditor /></Protected>} />
-    <Route path="auctions/:id" element={<AuctionDetails />} />
-    <Route path="auctions/:id/edit" element={<Protected roles={['seller','admin']}><AuctionEditor /></Protected>} />
-    <Route path="dashboard" element={<Protected><Dashboard /></Protected>} />
-    <Route path="signup" element={<Auth key="signup" signup />} />
-    <Route path="login" element={<Auth key="login" />} />
-    <Route path="profile" element={<Protected><Profile /></Protected>} />
-    <Route path="messages" element={<Protected roles={['buyer', 'seller']}><Messages /></Protected>} />
-    <Route path="admin" element={<Protected roles={['admin']}><Admin /></Protected>} />
-    <Route path="sellers" element={<Protected><Sellers /></Protected>} />
-    <Route path="contact" element={<Protected><Contact /></Protected>} />
-    <Route path="about" element={<About />} />
-    <Route path="auctions/:id/checkout" element={<Protected roles={['buyer']}><Checkout /></Protected>} />
-    <Route path="*" element={<EmptyState title="Page not found" message="Explore the latest auctions to find your next discovery." to="/auctions" action="Browse auctions" />} />
-  </Route></Routes></AuthProvider></BrowserRouter>
+	return <BrowserRouter><AuthProvider><Routes><Route element={<Layout />}>
+		<Route index element={<Home />} />
+		<Route path="auctions" element={<Browse />} />
+		<Route path="auctions/new" element={<Protected roles={['seller','admin']}><AuctionEditor /></Protected>} />
+		<Route path="auctions/:id" element={<AuctionDetails />} />
+		<Route path="auctions/:id/edit" element={<Protected roles={['seller','admin']}><AuctionEditor /></Protected>} />
+		<Route path="dashboard" element={<Protected><Dashboard /></Protected>} />
+		<Route path="signup" element={<Auth key="signup" signup />} />
+		<Route path="login" element={<Auth key="login" />} />
+		<Route path="profile" element={<Protected><Profile /></Protected>} />
+		<Route path="messages" element={<Protected roles={['buyer', 'seller']}><Messages /></Protected>} />
+		<Route path="admin" element={<Protected roles={['admin']}><Admin /></Protected>} />
+		<Route path="sellers" element={<Protected><Sellers /></Protected>} />
+		<Route path="contact" element={<Protected><Contact /></Protected>} />
+		<Route path="about" element={<About />} />
+		<Route path="auctions/:id/checkout" element={<Protected roles={['buyer']}><Checkout /></Protected>} />
+		<Route path="*" element={<EmptyState title="Page not found" message="Explore the latest auctions to find your next discovery." to="/auctions" action="Browse auctions" />} />
+	</Route></Routes></AuthProvider></BrowserRouter>
 }
