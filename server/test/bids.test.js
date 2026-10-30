@@ -39,6 +39,7 @@ test("bid HTTP validation, duplicate/expired conflicts, history and CRUD guards"
 		return auction;
 	});
 	const bids = [];
+	auction.deleteOne = async () => { missing = true; };
 	t.mock.method(Bid, "create", async ([data], options) => {
 		assert.equal(options.session, session);
 		const bid = new Bid(data);
@@ -48,6 +49,7 @@ test("bid HTTP validation, duplicate/expired conflicts, history and CRUD guards"
 	});
 	t.mock.method(Bid, "find", () => ({ sort: async () => bids }));
 	t.mock.method(Bid, "exists", () => ({ session: async () => bids.length ? { _id: bids[0]._id } : null }));
+	t.mock.method(Bid, "deleteMany", async () => { bids.length = 0; });
 	for (const body of [null, [], {}, { bidderName: " ", amount: 30 }, { bidderName: 42, amount: 30 }, { bidderName: "x".repeat(101), amount: 30 }, { bidderName: "Sam", amount: "30" }, { bidderName: "Sam", amount: -1 }, { bidderName: "Sam", amount: 0 }, { bidderName: "Sam", amount: 30, auctionId: id }]) {
 		assert.equal((await request(`/${id}/bids`, "POST", body)).status, 400);
 	}
@@ -60,14 +62,14 @@ test("bid HTTP validation, duplicate/expired conflicts, history and CRUD guards"
 	assert.equal(accepted.body.currentPrice, 30);
 	assert.equal((await request(`/${id}/bids`, "POST", { bidderName: "Lee", amount: 30 })).status, 409);
 	assert.equal((await request(`/${id}/bids`)).body.count, 1);
-	assert.equal((await request(`/${id}`, "DELETE")).status, 409);
 	assert.equal((await request(`/${id}`, "PUT", { startingPrice: 15 })).status, 409);
 	assert.equal((await request(`/${id}`, 'PUT', { currency: 'USD' })).status, 409);
 	auction.endsAt = new Date(Date.now() - 1000);
 	const expired = await request(`/${id}/bids`, "POST", { bidderName: "Lee", amount: 40 });
 	assert.equal(expired.status, 409);
 	assert.match(expired.body.message, /ended/);
-	missing = true;
+	assert.equal((await request(`/${id}`, "DELETE")).status, 200);
+	assert.equal(bids.length, 0);
 	assert.equal((await request(`/${id}/bids`)).status, 404);
 	assert.equal((await request(`/${id}/bids`, "POST", { bidderName: "Lee", amount: 40 })).status, 404);
 });
@@ -107,12 +109,14 @@ test("replica-set integration: competing bids, rollback, and racing CRUD", { ski
 	} finally { Bid.create = originalCreate; }
 	assert.equal((await Auction.findById(auction.id)).currentPrice, 60);
 	assert.equal(await Bid.countDocuments({ auctionId: auction.id }), history.length);
-	assert.equal((await request(path, "DELETE")).status, 409);
 	assert.equal((await request(path, "PUT", { startingPrice: 5 })).status, 409);
 	assert.equal((await request(path, "PUT", { startingPrice: 10, title: "Still editable" })).status, 200);
 	assert.equal((await Auction.findById(auction.id)).currentPrice, 60);
 	await Auction.updateOne({ _id: auction.id }, { $set: { endsAt: new Date(Date.now() - 1000) } });
 	assert.equal((await request(`${path}/bids`, "POST", { bidderName: "Late", amount: 80 })).status, 409);
+	assert.equal((await request(path, "DELETE")).status, 200);
+	assert.equal(await Auction.exists({ _id: auction.id }), null);
+	assert.equal(await Bid.exists({ auctionId: auction.id }), null);
 
 	for (let attempt = 0; attempt < 5; attempt++) {
 		const target = await create();
@@ -120,8 +124,10 @@ test("replica-set integration: competing bids, rollback, and racing CRUD", { ski
 			request(`/${target.id}/bids`, "POST", { bidderName: "Race", amount: 20 }),
 			request(`/${target.id}`, "DELETE")
 		]);
-		assert.ok((bid.status === 201 && deletion.status === 409) || (bid.status === 404 && deletion.status === 200));
-		assert.equal(Boolean(await Auction.exists({ _id: target.id })), Boolean(await Bid.exists({ auctionId: target.id })));
+		assert.equal(deletion.status, 200);
+		assert.ok([201, 404].includes(bid.status));
+		assert.equal(await Auction.exists({ _id: target.id }), null);
+		assert.equal(await Bid.exists({ auctionId: target.id }), null);
 
 		const editable = await create();
 		const [offer, edit] = await Promise.all([

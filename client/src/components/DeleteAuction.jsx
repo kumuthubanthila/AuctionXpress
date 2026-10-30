@@ -17,7 +17,7 @@ function Confirmation({ auction, close, onDeleted }) {
 		try { await api(`/auctions/${auction._id}`, { method: 'DELETE' }); onDeleted(); close() }
 		catch (failure) { setError(failure); setPending(false) }
 	}
-	return <dialog ref={dialog} className="confirm-dialog" aria-labelledby="delete-title" onCancel={(event) => { if (pending) event.preventDefault(); else close() }}><span className="eyebrow">PLEASE CONFIRM</span><h2 id="delete-title">Delete this auction?</h2><p>“{auction.title}” will be permanently removed. Auctions with bids cannot be deleted.</p><ErrorNotice error={error} /><div className="action-row"><button autoFocus className="button secondary" disabled={pending} onClick={close}>Keep auction</button><button className="button danger" disabled={pending} onClick={remove}>{pending ? 'Deleting…' : 'Delete auction'}</button></div></dialog>
+	return <dialog ref={dialog} className="confirm-dialog" aria-labelledby="delete-title" onCancel={(event) => { if (pending) event.preventDefault(); else close() }}><span className="eyebrow">PLEASE CONFIRM</span><h2 id="delete-title">Delete this auction?</h2><p>“{auction.title}” and its bid history will be permanently removed.</p><ErrorNotice error={error} /><div className="action-row"><button autoFocus className="button secondary" disabled={pending} onClick={close}>Keep auction</button><button className="button danger" disabled={pending} onClick={remove}>{pending ? 'Deleting…' : 'Delete auction'}</button></div></dialog>
 }
 export default function DeleteAuction({ auction, onDeleted }) {
 	const [confirm, setConfirm] = useState(false)

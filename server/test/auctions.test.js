@@ -10,6 +10,8 @@ test("auction HTTP routes, validation, filters and errors", async (t) => {
 	mockAuth(t);
 	t.mock.method(mongoose.connection, "transaction", async (callback) => callback({}));
 	t.mock.method(Bid, "exists", () => ({ session: async () => null }));
+	let deletedBidFilter;
+	t.mock.method(Bid, "deleteMany", async (filter) => { deletedBidFilter = filter; });
 	const server = app.listen(0, "127.0.0.1");
 	await new Promise((resolve) => server.once("listening", resolve));
 	t.after(() => new Promise((resolve) => server.close(resolve)));
@@ -83,6 +85,7 @@ test("auction HTTP routes, validation, filters and errors", async (t) => {
 	assert.equal((await malformed.json()).success, false);
 	assert.equal((await request("/missing")).status, 404);
 	assert.equal((await request(path, "DELETE")).status, 200);
+	assert.equal(String(deletedBidFilter.auctionId), created.body.data._id);
 	assert.equal((await request(path)).status, 404);
 });
 

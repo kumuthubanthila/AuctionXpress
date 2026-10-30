@@ -131,9 +131,9 @@ export async function deleteAuction(req, res) {
 	await mongoose.connection.transaction(async (session) => {
 		const auction = await findAuction(req.params.id, session);
 		if (!canManage(req.user, auction)) throw new HttpError(403, 'You can only delete your own auctions');
-		if (await Bid.exists({ auctionId: auction._id }).session(session)) {
-			throw new HttpError(409, "Auction cannot be deleted because it has bids");
-		}
+		// Bids only exist in the context of their auction, so remove them with it
+		// to avoid leaving orphaned bid history behind.
+		await Bid.deleteMany({ auctionId: auction._id }, { session });
 		await auction.deleteOne({ session });
 	}, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
 	res.json({ success: true, message: "Auction deleted successfully" });

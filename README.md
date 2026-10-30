@@ -65,7 +65,7 @@ Use the server origin without `/api` and restart Vite after changing it. Keep Mo
 
 The backend creates username **admin** with password **admin** on startup if that account does not exist. Existing credentials are not reset. Change the default password before making the application publicly accessible.
 
-Auctions with bids cannot be deleted. Starting price and currency cannot be changed after bids exist. Currency selection does not perform exchange conversion.
+Deleting an auction also permanently removes its bid history. Starting price and currency cannot be changed after bids exist. Currency selection does not perform exchange conversion.
 
 ## Main pages
 
