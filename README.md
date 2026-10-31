@@ -55,6 +55,16 @@ VITE_API_URL=http://localhost:5000
 
 Use the server origin without `/api` and restart Vite after changing it. Keep MongoDB credentials in the server environment only. Environment files are ignored by Git.
 
+## Sample marketplace data
+
+To add sample listings and bids, run this from `server` after configuring `MONGO_URI`:
+
+```powershell
+npm.cmd run seed
+```
+
+It is safe to run repeatedly: it creates 12 realistic sample auctions only when missing and adds only missing sample bids. The seed includes sellers `lakmal_perera`, `natures_craft`, and `urban_findslk`, plus buyers `isuru_j`, `amaya_fernando`, `kasun_g`, `tharushi_m`, and `dilan_rodrigo`. All seeded accounts use password `welcome2026`; the names and accounts are fictional.
+
 ## Accounts and workflow
 
 1. Sign up as a seller and create a listing with a future end date.
