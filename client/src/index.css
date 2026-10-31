@@ -18,12 +18,14 @@
 }
 html {
 	scroll-padding-top:calc(var(--top-pane-height, 130px) + 18px);
+	-webkit-text-size-adjust:100%
 }
 * {
 	box-sizing:border-box
 }
 body {
-	margin:0
+	margin:0;
+	overflow-x:hidden
 }
 button,input,select,textarea {
 	font:inherit

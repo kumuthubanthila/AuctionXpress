@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { dateTime, isOpen, isUpcoming, money } from '../lib/auction'
 
-export function AuctionImage({ src, title, className = '' }) {
+export function AuctionImage({ src, title, className = '', emptyLabel = 'Image unavailable' }) {
 	const [failed, setFailed] = useState(null)
-	if (!src || failed === src) return <div className={`image-placeholder ${className}`} role="img" aria-label={`No image available for ${title}`}><span aria-hidden="true">◇</span><small>Image unavailable</small></div>
+	if (!src || failed === src) return <div className={`image-placeholder ${className}`} role="img" aria-label={`No image available for ${title}`}><span aria-hidden="true">◇</span><small>{emptyLabel}</small></div>
 	return <img className={`auction-image ${className}`} src={src} alt={title} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(src)} />
 }
 export function StatusBadge({ auction, now }) {

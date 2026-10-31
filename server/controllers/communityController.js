@@ -21,6 +21,21 @@ export async function myBids(req, res) {
 	const bids = await Bid.find({ bidderId: req.user._id }).populate('auctionId', 'title currentPrice currency endsAt').sort({ createdAt: -1 });
 	res.json({ success: true, data: bids });
 }
+export async function myWinnings(req, res) {
+	const buyerId = new mongoose.Types.ObjectId(req.user._id);
+	const data = await Bid.aggregate([
+		{ $sort: { auctionId: 1, amount: -1, createdAt: 1, _id: 1 } },
+		{ $group: { _id: '$auctionId', winningBid: { $first: '$$ROOT' } } },
+		{ $match: { 'winningBid.bidderId': buyerId } },
+		{ $lookup: { from: 'auctions', localField: '_id', foreignField: '_id', as: 'auction' } },
+		{ $unwind: '$auction' },
+		{ $match: { 'auction.endsAt': { $lte: new Date() } } },
+		{ $lookup: { from: 'payments', localField: '_id', foreignField: 'auctionId', as: 'payment' } },
+		{ $project: { _id: 0, auction: { _id: '$auction._id', title: '$auction.title', imageUrl: '$auction.imageUrl', category: '$auction.category', currency: '$auction.currency', endsAt: '$auction.endsAt' }, winningBid: { amount: '$winningBid.amount', createdAt: '$winningBid.createdAt' }, payment: { $arrayElemAt: ['$payment', 0] } } },
+		{ $sort: { 'auction.endsAt': -1 } }
+	]);
+	res.json({ success: true, count: data.length, data });
+}
 export async function users(req, res) {
 	const filter = {};
 	if (req.query.role) {

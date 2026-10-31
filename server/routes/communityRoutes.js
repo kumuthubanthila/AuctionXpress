@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { roles, requireAuth } from '../middleware/auth.js';
-import { sellers, users, addUser, editUser, deleteUser, sendMessage, messages, removeMessage, uploadImage, myBids } from '../controllers/communityController.js';
+import { sellers, users, addUser, editUser, deleteUser, sendMessage, messages, removeMessage, uploadImage, myBids, myWinnings } from '../controllers/communityController.js';
 const router = Router();
 router.get('/sellers', requireAuth, sellers);
 router.get('/account/bids', roles('buyer'), myBids);
+router.get('/account/winnings', roles('buyer'), myWinnings);
 router.post('/messages', requireAuth, sendMessage);
 router.post('/uploads', roles('seller', 'admin'), uploadImage);
 router.use('/admin', roles('admin'));

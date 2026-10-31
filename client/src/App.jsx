@@ -18,6 +18,7 @@ import Contact from './pages/Contact'
 import About from './pages/About'
 import Checkout from './pages/Checkout'
 import Messages from './pages/Messages'
+import Winnings from './pages/Winnings'
 
 export default function App() {
 	return <BrowserRouter><AuthProvider><Routes><Route element={<Layout />}>
@@ -27,6 +28,7 @@ export default function App() {
 		<Route path="auctions/:id" element={<AuctionDetails />} />
 		<Route path="auctions/:id/edit" element={<Protected roles={['seller','admin']}><AuctionEditor /></Protected>} />
 		<Route path="dashboard" element={<Protected><Dashboard /></Protected>} />
+		<Route path="winnings" element={<Protected roles={['buyer']}><Winnings /></Protected>} />
 		<Route path="signup" element={<Auth key="signup" signup />} />
 		<Route path="login" element={<Auth key="login" />} />
 		<Route path="profile" element={<Protected><Profile /></Protected>} />

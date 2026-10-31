@@ -62,6 +62,7 @@ The application also creates the initial `admin` account with password `admin` w
 | `/auctions` | Browse and filter listings |
 | `/auctions/:id` | Auction details, bids, and history |
 | `/dashboard` | Buyer or seller workspace |
+| `/winnings` | Buyer winnings and checkout status |
 | `/messages` | Buyer and seller inbox |
 | `/admin` | Listing approval and account management |
 | `/profile` | Account settings |
